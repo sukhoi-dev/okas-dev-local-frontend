@@ -4,6 +4,7 @@ import CallbackPage from './pages/CallbackPage';
 import WelcomePage from './pages/WelcomePage';
 import ProjectsPage from './pages/ProjectsPage';
 import AddProjectPage from './pages/AddProjectPage';
+import AdminPage from './pages/AdminPage';
 
 function getPage() {
   const path = window.location.pathname;
@@ -11,6 +12,7 @@ function getPage() {
   if (path === '/welcome')      return 'welcome';
   if (path === '/projects')     return 'projects';
   if (path === '/projects/new') return 'add-project';
+  if (path === '/admin')        return 'admin';
   return 'login';
 }
 
@@ -20,6 +22,7 @@ function App() {
   if (page === 'welcome')     return <WelcomePage />;
   if (page === 'projects')    return <ProjectsPage />;
   if (page === 'add-project') return <AddProjectPage />;
+  if (page === 'admin')       return <AdminPage />;
   return <LoginPage />;
 }
 
