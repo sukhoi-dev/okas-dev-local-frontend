@@ -21,7 +21,7 @@ export default function CallbackPage() {
 
     handleCallback(code)
       .then(() => {
-        window.location.pathname = '/welcome';
+        window.location.pathname = '/projects';
       })
       .catch((e) => {
         setError(e.message);
