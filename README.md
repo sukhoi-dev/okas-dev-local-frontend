@@ -44,7 +44,7 @@ Locally preview the production build.
 - Vite configuration: `vite.config.js`
 - No CRA `eject` command is available
 
-## Learn More
+## Learn Mor
 
 - [Vite Documentation](https://vitejs.dev/)
 - [React Documentation](https://reactjs.org/)
