@@ -26,10 +26,44 @@ const ROLE_BADGE_COLORS = {
 
 export default function AdminPage() {
   const user = getUser();
-  const isSuperAdmin = sessionStorage.getItem('is_super_admin') === 'true';
+  const [authState, setAuthState] = useState(
+    // 'checking' if flag not yet set (e.g. session pre-dates this feature),
+    // 'ok' if already confirmed, 'denied' if confirmed not super admin
+    sessionStorage.getItem('is_super_admin') === 'true'  ? 'ok' :
+    sessionStorage.getItem('is_super_admin') === 'false' ? 'denied' :
+    'checking'
+  );
+
+  useEffect(() => {
+    if (!user || authState !== 'checking') return;
+    // Flag not in sessionStorage — re-verify against the backend
+    fetch(`${API_BASE}/api/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        const isSuper = json.data?.is_super_admin === true;
+        sessionStorage.setItem('is_super_admin', isSuper ? 'true' : 'false');
+        setAuthState(isSuper ? 'ok' : 'denied');
+      })
+      .catch(() => setAuthState('denied'));
+  }, [user, authState]);
 
   if (!user) { window.location.pathname = '/login'; return null; }
-  if (!isSuperAdmin) { window.location.pathname = '/projects'; return null; }
+  if (authState === 'denied') { window.location.pathname = '/projects'; return null; }
+  if (authState === 'checking') {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#EDEDED' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 36, height: 36, border: '3px solid #C5A25E', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+          <p style={{ color: '#666', fontSize: 14, fontFamily: 'system-ui' }}>Checking access…</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return <AdminPageInner user={user} />;
 }
