@@ -5,6 +5,18 @@ import bgVideo from '../../assets/bgVideo.gif';
 import imgWeOkasLogo from '../../assets/weOkasLogo.png';
 import { verifyOtp, sendOtp } from './loginAuthService';
 import useAuthStore from './authStore';
+import { ROUTE_PATHS } from '../../config/constants';
+
+function getRoleRedirectPath(user) {
+  switch (user?.role) {
+    case 'admin':        return ROUTE_PATHS.WEOKAS_DASHBOARD;
+    case 'distributor':  return '/distributor/dashboard';
+    case 'si':           return '/si/dashboard';
+    case 'user':         return '/user/dashboard';
+    case 'pm':
+    default:             return '/dashboard';
+  }
+}
 
 export default function OtpPage() {
   const navigate = useNavigate();
@@ -57,7 +69,7 @@ export default function OtpPage() {
     try {
       const { token, user } = await verifyOtp(email, otpValue);
       storeLogin(user, token, null);
-      navigate('/dashboard');
+      navigate(getRoleRedirectPath(user));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed');
     } finally {
