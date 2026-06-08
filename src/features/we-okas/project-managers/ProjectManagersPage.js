@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import svgPaths from './assets/svg-dashboard-projects';
 import FilterDropdown from './FilterDropdown';
 import AddProjectDrawer from './AddProjectDrawer';
-import { TopNav, LeftNav } from './SharedNav';
+import { TopNav, LeftNav } from '../shared/SharedNav';
 import { DUMMY_PROJECTS } from './dummyData';
 
 function mapApiProject(p) {

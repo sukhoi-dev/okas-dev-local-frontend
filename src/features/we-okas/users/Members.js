@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import svgPaths from './assets/svg-members';
+import svgPaths from '../project-managers/assets/svg-members';
 import { TopNav, LeftNav } from '../shared/SharedNav';
-import AddMemberDrawer from './AddMemberDrawer';
-import EditMemberDrawer from './EditMemberDrawer';
-import FilterDropdown from './FilterDropdown';
-import { DUMMY_MEMBERS } from './dummyData';
+import AddMemberDrawer from '../project-managers/AddMemberDrawer';
+import EditMemberDrawer from '../project-managers/EditMemberDrawer';
+import FilterDropdown from '../project-managers/FilterDropdown';
+import { DUMMY_MEMBERS } from '../project-managers/dummyData';
 
 function mapApiMember(m, index) {
   return {
@@ -52,21 +52,9 @@ function KebabMenu({ memberId, onEdit, onDelete }) {
               transition={{ duration: 0.15 }}
               className="absolute right-0 top-full mt-1 w-[140px] bg-white rounded-[8px] shadow-[0px_8px_32px_0px_rgba(10,30,63,0.12)] border border-[#e2e2e2] overflow-hidden z-20"
             >
-              <motion.button
-                onClick={() => { onEdit(memberId); setIsOpen(false); }}
-                whileHover={{ x: 4, backgroundColor: '#f4f7fb' }}
-                className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#0a1e3f] transition-colors font-['Inter:Medium',sans-serif] font-medium"
-              >
-                Edit
-              </motion.button>
+              <motion.button onClick={() => { onEdit(memberId); setIsOpen(false); }} whileHover={{ x: 4, backgroundColor: '#f4f7fb' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#0a1e3f] transition-colors font-['Inter:Medium',sans-serif] font-medium">Edit</motion.button>
               <div className="h-px w-full bg-[#e2e2e2]" />
-              <motion.button
-                onClick={() => { onDelete(memberId); setIsOpen(false); }}
-                whileHover={{ x: 4, backgroundColor: '#fef2f2' }}
-                className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#dc2626] transition-colors font-['Inter:Medium',sans-serif] font-medium"
-              >
-                Delete
-              </motion.button>
+              <motion.button onClick={() => { onDelete(memberId); setIsOpen(false); }} whileHover={{ x: 4, backgroundColor: '#fef2f2' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#dc2626] transition-colors font-['Inter:Medium',sans-serif] font-medium">Delete</motion.button>
             </motion.div>
           </>
         )}
@@ -75,10 +63,10 @@ function KebabMenu({ memberId, onEdit, onDelete }) {
   );
 }
 
-export default function Members() {
+export default function UserMembers() {
   const [members, setMembers] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fetchError, setFetchError] = useState(null);
+  const [isLoading] = useState(false);
+  const [fetchError] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -99,17 +87,13 @@ export default function Members() {
     },
   ];
 
-  const fetchMembers = () => {
-    setMembers(DUMMY_MEMBERS.map(mapApiMember));
-  };
+  const fetchMembers = () => { setMembers(DUMMY_MEMBERS.map(mapApiMember)); };
 
   useEffect(() => { fetchMembers(); }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (filterRef.current && !filterRef.current.contains(event.target)) {
-        setShowFilterDropdown(false);
-      }
+      if (filterRef.current && !filterRef.current.contains(event.target)) setShowFilterDropdown(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -119,14 +103,9 @@ export default function Members() {
     const member = members.find(m => m.id === id);
     if (member) {
       setEditingMember({
-        id: member.id,
-        fullName: member.name,
-        email: member.email,
-        phoneNumber: member.mobile,
-        dateOfBirth: member.dateOfBirth,
-        bloodGroup: member.bloodGroup,
-        role: member.role,
-        profilePhoto: member.profilePhoto,
+        id: member.id, fullName: member.name, email: member.email,
+        phoneNumber: member.mobile, dateOfBirth: member.dateOfBirth,
+        bloodGroup: member.bloodGroup, role: member.role, profilePhoto: member.profilePhoto,
       });
     }
   };
@@ -138,12 +117,12 @@ export default function Members() {
   };
 
   const filteredMembers = members.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.role.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.role.toLowerCase().includes(searchQuery.toLowerCase());
     const selectedRoles = appliedFilters['Role'] ?? [];
-    const matchesRole = selectedRoles.length === 0 || selectedRoles.includes(member.role);
-    return matchesSearch && matchesRole;
+    return matchesSearch && (selectedRoles.length === 0 || selectedRoles.includes(member.role));
   });
 
   return (
@@ -157,12 +136,7 @@ export default function Members() {
           <div className="flex h-[44px] items-center justify-between w-full">
             <div className="flex gap-[12px] items-center">
               <div className="relative" ref={filterRef}>
-                <motion.button
-                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="bg-white h-[44px] rounded-[4px] px-[16px] border border-[#e2e2e2] hover:bg-[#f4f7fb] transition-colors flex items-center gap-[8px]"
-                >
+                <motion.button onClick={() => setShowFilterDropdown(!showFilterDropdown)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="bg-white h-[44px] rounded-[4px] px-[16px] border border-[#e2e2e2] hover:bg-[#f4f7fb] transition-colors flex items-center gap-[8px]">
                   <div className="relative shrink-0 size-[18px]">
                     <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
                       <path d={svgPaths.p1fd8fe50} stroke="#0A1E3F" strokeLinecap="round" strokeWidth="1.26" />
@@ -175,9 +149,7 @@ export default function Members() {
                     </motion.span>
                   )}
                 </motion.button>
-                {showFilterDropdown && (
-                  <FilterDropdown categories={filterCategories} onApply={(f) => setAppliedFilters(f)} onClose={() => setShowFilterDropdown(false)} />
-                )}
+                {showFilterDropdown && <FilterDropdown categories={filterCategories} onApply={(f) => setAppliedFilters(f)} onClose={() => setShowFilterDropdown(false)} />}
               </div>
 
               <div className="bg-white h-[44px] rounded-[4px] w-[280px] border border-[#e2e2e2]">
@@ -193,12 +165,7 @@ export default function Members() {
               </div>
             </div>
 
-            <motion.button
-              onClick={() => setIsAddMemberOpen(true)}
-              whileHover={{ scale: 1.03, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-[#0a1e3f] flex gap-[8px] h-[44px] items-center justify-center px-[20px] rounded-[4px] w-[180px] hover:opacity-90 transition-opacity shadow-sm hover:shadow-lg"
-            >
+            <motion.button onClick={() => setIsAddMemberOpen(true)} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="bg-[#0a1e3f] flex gap-[8px] h-[44px] items-center justify-center px-[20px] rounded-[4px] w-[180px] hover:opacity-90 transition-opacity shadow-sm hover:shadow-lg">
               <motion.div animate={{ rotate: [0, 90, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="relative shrink-0 size-[18px]">
                 <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
                   <path d="M9 3.6V14.4M3.6 9H14.4" stroke="white" strokeLinecap="round" strokeWidth="1.44" />

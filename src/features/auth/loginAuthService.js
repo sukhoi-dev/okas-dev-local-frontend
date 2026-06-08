@@ -1,19 +1,35 @@
 const BASE_URL = '/api';
 
 // ── Dev bypass ────────────────────────────────────────────────────────────────
-const DEV_EMAIL    = 'pm@weokas.com';
-const DEV_PASSWORD = 'pm@123';
-const DEV_OTP      = '123456';
-const DEV_TOKEN    = 'dev_mock_token';
-const DEV_USER     = { id: 'dev-001', name: 'PM User', email: DEV_EMAIL, role: 'admin' };
+const DEV_OTP = '123456';
 
-function isMock(email) {
-  return email === DEV_EMAIL;
+const MOCK_USERS = {
+  'admin@weokas.com':       { id: 1, name: 'Admin User',        email: 'admin@weokas.com',       role: 'admin',       password: 'admin@123', token: null                  },
+  'pm@weokas.com':          { id: 2, name: 'PM User',           email: 'pm@weokas.com',          role: 'pm',          password: 'pm@123',    token: null                  },
+  'distributor@weokas.com': { id: 2, name: 'Super Distributor Co.', email: 'distributor@weokas.com', role: 'distributor', password: 'dist@123', token: 'dist-dev-token-001' },
+  'si@weokas.com':          { id: 4, name: 'SI User',           email: 'si@weokas.com',          role: 'si',          password: 'si@123',    token: null                  },
+  'user@weokas.com':        { id: 5, name: 'End User',          email: 'user@weokas.com',        role: 'user',        password: 'user@123',  token: null                  },
+};
+
+function isMock(email) { return email in MOCK_USERS; }
+
+// Try real API for token — use mock user data for role/id on frontend
+async function getRealToken(endpoint, body) {
+  try {
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.access_token) return data.access_token;
+  } catch {}
+  return null;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function sendOtp(email) {
-  if (isMock(email)) return; // skip real API for dev credentials
+  if (isMock(email)) return;
 
   const res = await fetch(`${BASE_URL}/members/auth/otp/send`, {
     method: 'POST',
@@ -28,8 +44,10 @@ export async function sendOtp(email) {
 
 export async function verifyOtp(email, otp) {
   if (isMock(email)) {
-    if (otp === DEV_OTP) return { token: DEV_TOKEN, user: DEV_USER };
-    throw new Error('Invalid OTP. Use ' + DEV_OTP + ' for dev login.');
+    if (otp !== DEV_OTP) throw new Error('Invalid OTP. Use ' + DEV_OTP + ' for mock login.');
+    const mockUser = MOCK_USERS[email];
+    const realToken = mockUser.token ?? await getRealToken('/members/auth/otp/verify', { email, otp });
+    return { token: realToken ?? 'dev_mock_token', user: mockUser };
   }
 
   const res = await fetch(`${BASE_URL}/members/auth/otp/verify`, {
@@ -44,8 +62,10 @@ export async function verifyOtp(email, otp) {
 
 export async function loginWithPassword(email, password) {
   if (isMock(email)) {
-    if (password === DEV_PASSWORD) return { token: DEV_TOKEN, user: DEV_USER };
-    throw new Error('Invalid password. Use ' + DEV_PASSWORD + ' for dev login.');
+    const mockUser = MOCK_USERS[email];
+    if (password !== mockUser.password) throw new Error('Invalid password. Use ' + mockUser.password + ' for mock login.');
+    const realToken = mockUser.token ?? await getRealToken('/members/auth/login/password', { email, password });
+    return { token: realToken ?? 'dev_mock_token', user: mockUser };
   }
 
   const res = await fetch(`${BASE_URL}/members/auth/login/password`, {

@@ -8,6 +8,17 @@ import { loginWithPassword, sendOtp } from './loginAuthService';
 import useAuthStore from './authStore';
 import { ROUTE_PATHS } from '../../config/constants';
 
+function getRoleRedirectPath(user) {
+  switch (user?.role) {
+    case 'admin':        return ROUTE_PATHS.WEOKAS_DASHBOARD;
+    case 'distributor':  return '/distributor/dashboard';
+    case 'si':           return '/si/dashboard';
+    case 'user':         return '/user/dashboard';
+    case 'pm':
+    default:             return '/dashboard';
+  }
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const storeLogin = useAuthStore((s) => s.login);
@@ -27,7 +38,7 @@ export default function LoginPage() {
     try {
       const { token, user } = await loginWithPassword(email, password);
       storeLogin(user, token, null);
-      navigate('/dashboard');
+      navigate(getRoleRedirectPath(user));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -45,6 +56,7 @@ export default function LoginPage() {
     try {
       await sendOtp(email);
       navigate('/auth/otp', { state: { email, keepLoggedIn } });
+      // role-based redirect happens in OtpPage after OTP verification
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send OTP');
     } finally {
