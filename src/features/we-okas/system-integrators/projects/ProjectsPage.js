@@ -1,12 +1,12 @@
 import { Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
-import PageWrapper from '../../../shared/components/PageWrapper';
-import DataTable from '../../../shared/components/DataTable';
-import StatusBadge from '../../../shared/components/StatusBadge';
-import PermissionGuard from '../../../rbac/PermissionGuard';
-import P from '../../../rbac/permissions';
-import { formatDate } from '../../../shared/utils/date.utils';
+import PageWrapper from '../../../../shared/components/PageWrapper';
+import DataTable from '../../../../shared/components/DataTable';
+import StatusBadge from '../../../../shared/components/StatusBadge';
+import PermissionGuard from '../../../../rbac/PermissionGuard';
+import P from '../../../../rbac/permissions';
+import { formatDate } from '../../../../shared/utils/date.utils';
 
 const MOCK = [
   { id: '1', name: 'Smart Office Alpha', organization: 'Techwave Ltd', status: 'active',    createdAt: '2024-01-15' },

@@ -1,5 +1,5 @@
-import apiClient from '../../../api/client';
-import { PROJECTS } from '../../../api/endpoints';
+import apiClient from '../../../../api/client';
+import { PROJECTS } from '../../../../api/endpoints';
 const projectService = {
   list: (p) => apiClient.get(PROJECTS.LIST, { params: p }).then((r) => r.data),
   detail: (id) => apiClient.get(PROJECTS.DETAIL(id)).then((r) => r.data),

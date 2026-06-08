@@ -2,10 +2,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Box, Chip } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import PageWrapper from '../../../shared/components/PageWrapper';
-import PermissionGuard from '../../../rbac/PermissionGuard';
-import P from '../../../rbac/permissions';
-import { ROUTE_PATHS } from '../../../config/constants';
+import PageWrapper from '../../../../shared/components/PageWrapper';
+import PermissionGuard from '../../../../rbac/PermissionGuard';
+import P from '../../../../rbac/permissions';
+import { ROUTE_PATHS } from '../../../../config/constants';
 
 export default function ProjectDetail() {
   const { projectId } = useParams();

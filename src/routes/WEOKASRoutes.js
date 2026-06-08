@@ -17,8 +17,8 @@ const Guard = ({ roles, children }) => {
 };
 
 const DashboardPage        = lazy(() => import('../features/we-okas/dashboard/DashboardPage'));
-const ProjectsPage         = lazy(() => import('../features/we-okas/projects/ProjectsPage'));
-const ProjectDetail        = lazy(() => import('../features/we-okas/projects/ProjectDetail'));
+const ProjectsPage         = lazy(() => import('../features/we-okas/system-integrators/projects/ProjectsPage'));
+const ProjectDetail        = lazy(() => import('../features/we-okas/system-integrators/projects/ProjectDetail'));
 const DistributorsPage     = lazy(() => import('../features/we-okas/distributors/DistributorsPage'));
 const SystemIntegratorsPage= lazy(() => import('../features/we-okas/system-integrators/SystemIntegratorsPage'));
 const ProjectManagersPage  = lazy(() => import('../features/we-okas/project-managers/ProjectManagersPage'));

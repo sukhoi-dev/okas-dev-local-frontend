@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import svgPaths from './assets/svg-add-project';
-import { DUMMY_MEMBERS } from './dummyData';
+import svgPaths from '../../project-managers/assets/svg-add-project';
+import { DUMMY_MEMBERS } from '../../project-managers/dummyData';
 
 const emptyForm = {
   buildingId: '',
@@ -30,9 +30,23 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
   }, [isOpen, initialData]);
 
   const handleSubmit = () => {
-    onSave(formData);
+    const payload = {
+      name: formData.buildingId,
+      project_type: formData.buildingType.toLowerCase(),
+      address: formData.address,
+      notes: formData.landmark,
+      project_manager_id: formData.assignedMember,
+      serial_number: formData.serialNumber,
+      homeowner: {
+        full_name: formData.contactName,
+        phone: `${formData.phoneCountryCode}${formData.phoneNumber}`,
+        email: formData.email,
+      },
+    };
+    console.log('Submitting payload:', payload);
+    onSave(payload);
     setFormData(emptyForm);
-    onClose();
+    // onClose();
   };
 
   const handleCancel = () => {

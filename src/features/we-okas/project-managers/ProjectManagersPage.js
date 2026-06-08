@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import svgPaths from './assets/svg-dashboard-projects';
 import FilterDropdown from './FilterDropdown';
-import AddProjectDrawer from './AddProjectDrawer';
+import AddProjectDrawer from '../system-integrators/projects/AddProjectDrawer';
 import { TopNav, LeftNav } from '../shared/SharedNav';
 import { DUMMY_PROJECTS } from './dummyData';
 
