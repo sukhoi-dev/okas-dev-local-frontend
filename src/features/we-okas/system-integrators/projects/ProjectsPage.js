@@ -197,17 +197,27 @@ export default function ProjectsPage() {
   const handleEdit = (id) => {
     const raw = rawProjects.find(p => p.id === id);
     if (!raw) return;
+
+    const ownerPhone = raw.owner?.phone || raw.mobile || '';
+    const knownCodes = ['+91', '+1', '+44', '+86'];
+    const phoneCountryCode = knownCodes.find(c => ownerPhone.startsWith(c)) || '+91';
+    const phoneNumber = ownerPhone.startsWith(phoneCountryCode) ? ownerPhone.slice(phoneCountryCode.length) : ownerPhone;
+
+    const rawType = raw.project_type || raw.building_type || 'residential';
+    const buildingType = rawType.charAt(0).toUpperCase() + rawType.slice(1);
+
     setEditData({
-      buildingId:       raw.building_id   || '',
-      buildingType:     raw.building_type || 'Residential',
-      address:          raw.address       || '',
-      landmark:         raw.landmark      || '',
+      projectName:      raw.name            || '',
+      buildingId:       raw.building_id     || '',
+      buildingType,
+      address:          raw.address         || '',
+      landmark:         raw.landmark        || raw.notes || '',
       assignedMember:   raw.project_manager_id ?? raw.assigned_member ?? '',
-      contactName:      raw.name          || '',
-      phoneCountryCode: '+91',
-      phoneNumber:      raw.mobile        || '',
-      email:            raw.email         || '',
-      serialNumber:     raw.okas_box_info || raw.serial_number || '',
+      contactName:      raw.owner?.full_name || raw.owner?.name || '',
+      phoneCountryCode,
+      phoneNumber,
+      email:            raw.owner?.email    || raw.email || '',
+      serialNumber:     raw.serial_number   || raw.okas_box_info || '',
     });
     setEditId(id);
     setShowEditDrawer(true);
