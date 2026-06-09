@@ -121,20 +121,10 @@ export default function LoginPage() {
   return (
     <div className="login-root">
 
-      {/* ── Left panel: brand ── */}
+      {/* ── Left panel: brand photo ── */}
       <div className="login-left">
         <div className="login-brand">
-          <WeOkasLogo size={32} />
-          <span className="brand-text">We.OKAS</span>
-        </div>
-
-        <div className="brand-hero">
-          <BuildingIllustration />
-          <p className="hero-tagline">Smart Homes.<br/>Seamless Control.</p>
-          <p className="hero-sub">
-            The unified platform for System Integrators<br/>
-            to configure, manage and monitor OKAS projects.
-          </p>
+          <span className="brand-text">WE.OKAS</span>
         </div>
 
         <div className="login-left-footer">
@@ -151,7 +141,7 @@ export default function LoginPage() {
             <>
               <div className="login-header">
                 <h2 className="login-title">Sign in</h2>
-                <p className="login-subtitle">Welcome back to We.OKAS</p>
+                <p className="login-subtitle">Welcome back to WE.OKAS</p>
               </div>
 
               {/* Google */}
@@ -254,16 +244,6 @@ export default function LoginPage() {
 
 // ── Inline SVG helpers ─────────────────────────────────────────
 
-function WeOkasLogo({ size = 28 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-      <rect width="40" height="40" rx="8" fill="#0D1B2A"/>
-      <path d="M9 14 L14 26 L20 18 L26 26 L31 14" stroke="#1DB5AA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <circle cx="20" cy="28" r="2" fill="#E87B3B"/>
-    </svg>
-  );
-}
-
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 48 48">
@@ -271,33 +251,6 @@ function GoogleIcon() {
       <path fill="#34A853" d="M6.3 14.7l7 5.1C15 16.1 19.2 13 24 13c3.1 0 6 1.1 8.1 2.9l6.4-6.4C34.6 5 29.6 3 24 3c-7.7 0-14.3 4.6-17.7 11.7z"/>
       <path fill="#FBBC05" d="M24 43c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.2C29.5 34.8 26.9 36 24 36c-5.5 0-10.2-3.5-11.8-8.4l-7 5.4C8.6 39.5 15.8 43 24 43z"/>
       <path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-1 3-3.4 5.3-6.3 6.8l6.4 5.2C40 37.4 44.5 30.7 44.5 23c0-1-.2-2-.2-3H44.5z"/>
-    </svg>
-  );
-}
-
-function BuildingIllustration() {
-  return (
-    <svg width="200" height="200" viewBox="0 0 200 200" fill="none" className="hero-illustration">
-      {/* Building outline */}
-      <rect x="40" y="70" width="120" height="115" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
-      {/* Roof triangle */}
-      <path d="M30 72 L100 20 L170 72" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinejoin="round" fill="rgba(255,255,255,0.04)"/>
-      {/* Windows row 1 */}
-      {[58, 90, 122].map(x => (
-        <rect key={x} x={x} y="88" width="22" height="20" rx="3" fill="rgba(29,181,170,0.35)" stroke="rgba(29,181,170,0.6)" strokeWidth="1"/>
-      ))}
-      {/* Windows row 2 */}
-      {[58, 90, 122].map(x => (
-        <rect key={x} x={x} y="120" width="22" height="20" rx="3" fill="rgba(232,123,59,0.25)" stroke="rgba(232,123,59,0.5)" strokeWidth="1"/>
-      ))}
-      {/* Door */}
-      <rect x="87" y="148" width="26" height="37" rx="3" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"/>
-      {/* Door knob */}
-      <circle cx="108" cy="168" r="2.5" fill="rgba(232,123,59,0.8)"/>
-      {/* WiFi/signal arc — smart home indicator */}
-      <path d="M92 54 Q100 48 108 54" stroke="#1DB5AA" strokeWidth="2" strokeLinecap="round" fill="none"/>
-      <path d="M86 60 Q100 50 114 60" stroke="#1DB5AA" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6"/>
-      <circle cx="100" cy="59" r="2.5" fill="#1DB5AA"/>
     </svg>
   );
 }

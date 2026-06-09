@@ -80,7 +80,7 @@ export default function AddProjectPage() {
       <main style={{ flex: 1, padding: '36px 40px' }}>
         {/* Top bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-          <span style={{ fontSize: 22, fontWeight: 700, color: '#1C1C1E', letterSpacing: 0.3 }}>We.OKAS</span>
+          <span style={{ fontSize: 22, fontWeight: 800, background: 'linear-gradient(90deg, #1DB5AA 0%, #E87B3B 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', letterSpacing: 1 }}>WE.OKAS</span>
           <div style={{ flex: 1, margin: '0 24px' }}>
             <input placeholder="Search" style={{ width: '100%', maxWidth: 520, border: '1.5px solid #CCC', borderRadius: 8, padding: '8px 16px', fontSize: 14, background: '#fff', outline: 'none' }} />
           </div>

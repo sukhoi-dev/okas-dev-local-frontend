@@ -100,8 +100,7 @@ export default function ProjectsPage() {
       <header style={styles.header}>
         {/* Logo */}
         <div style={styles.headerLogo}>
-          <WeOkasLogo />
-          <span style={styles.logoText}>We.OKAS</span>
+          <span style={styles.logoText}>WE.OKAS</span>
         </div>
 
         {/* Search */}
@@ -355,17 +354,6 @@ function AvatarMenu({ user }) {
         </div>
       )}
     </div>
-  );
-}
-
-// ── Logo component ────────────────────────────────────────────
-function WeOkasLogo() {
-  return (
-    <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
-      <rect width="40" height="40" rx="8" fill="#0D1B2A"/>
-      <path d="M9 14 L14 26 L20 18 L26 26 L31 14" stroke="#1DB5AA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <circle cx="20" cy="28" r="2" fill="#E87B3B"/>
-    </svg>
   );
 }
 

@@ -210,8 +210,7 @@ function AdminPageInner({ user }) {
       {/* Header */}
       <header style={headerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: 210, flexShrink: 0 }}>
-          <WeOkasLogo />
-          <span style={logoTextStyle}>We.OKAS</span>
+          <span style={logoTextStyle}>WE.OKAS</span>
         </div>
         <div style={{ flex: 1, maxWidth: 480, position: 'relative', display: 'flex', alignItems: 'center' }}>
           <svg style={{ position: 'absolute', left: 12, pointerEvents: 'none' }} width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#9BA8B7" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -584,10 +583,6 @@ function ErrorMsg({ msg }) {
 function EditIcon()  { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>; }
 function RolesIcon() { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>; }
 function TrashIcon() { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>; }
-
-function WeOkasLogo() {
-  return <svg width="30" height="30" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#0D1B2A"/><path d="M9 14 L14 26 L20 18 L26 26 L31 14" stroke="#1DB5AA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/><circle cx="20" cy="28" r="2" fill="#E87B3B"/></svg>;
-}
 
 // ── Helpers ───────────────────────────────────────────────────
 const tdStyle = { padding: '14px 20px', fontSize: 14, color: '#4A5568', verticalAlign: 'middle' };
