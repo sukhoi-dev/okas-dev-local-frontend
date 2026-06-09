@@ -44,6 +44,7 @@ export default function CallbackPage() {
         const json = await res.json();
         const isSuperAdmin = json.data?.is_super_admin === true;
         sessionStorage.setItem('is_super_admin', isSuperAdmin ? 'true' : 'false');
+        sessionStorage.setItem('user_roles', JSON.stringify(json.data?.roles || []));
 
         window.location.pathname = '/projects';
       })
