@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { initiateGoogleLogin, getUser } from '../auth';
 import '../styles/LoginPage.css';
 
@@ -14,16 +14,23 @@ const OTP_ERROR_MESSAGES = {
 };
 
 export default function LoginPage() {
+  // Compute once on mount — stable, never re-evaluated on re-renders
+  const [alreadyLoggedIn] = useState(() => !!getUser());
   const [email, setEmail]           = useState('');
   const [otpSent, setOtpSent]       = useState(false);
   const [otp, setOtp]               = useState(['', '', '', '', '', '']);
   const [loading, setLoading]       = useState(false);
   const [fieldError, setFieldError] = useState('');
 
-  if (getUser()) {
-    window.location.pathname = '/projects';
-    return null;
-  }
+  // Redirect already-logged-in users in useEffect (not during render)
+  // so we never trigger navigation as a render-time side effect.
+  useEffect(() => {
+    if (alreadyLoggedIn) {
+      window.location.replace('/projects');
+    }
+  }, [alreadyLoggedIn]);
+
+  if (alreadyLoggedIn) return null;
 
   // ── Google sign-in ───────────────────────────────────────────
   function handleGoogleSignIn() {
@@ -109,7 +116,7 @@ export default function LoginPage() {
         picture: null,
         sub:     data.email   || email,
       }));
-      window.location.pathname = '/projects';
+      window.location.replace('/projects');
     } catch {
       setFieldError('Network error. Please try again.');
     } finally {

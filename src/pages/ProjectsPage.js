@@ -61,9 +61,10 @@ const NAV_ITEMS = [
 ];
 
 export default function ProjectsPage() {
-  const user    = getUser();
-  const role    = getUserRole();
-  const roleIdx = roleIndex(role);
+  // Compute once on mount — stable references, never re-evaluated on re-renders
+  const [user]    = useState(() => getUser());
+  const [role]    = useState(() => getUserRole());
+  const [roleIdx] = useState(() => roleIndex(getUserRole()));
 
   const [projects, setProjects]     = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -71,12 +72,12 @@ export default function ProjectsPage() {
   const [search, setSearch]         = useState('');
 
   useEffect(() => {
-    if (!user) { window.location.pathname = '/login'; return; }
+    if (!user) { window.location.replace('/login'); return; }
     fetch(`${API_BASE}/api/projects`)
       .then(r => r.json())
       .then(res => { setProjects(res.data || []); setLoading(false); })
       .catch(e  => { setError(e.message); setLoading(false); });
-  }, [user]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) return null;
 

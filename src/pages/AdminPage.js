@@ -16,7 +16,8 @@ const ROLE_BADGE_COLORS = {
 };
 
 export default function AdminPage() {
-  const user = getUser();
+  // Stable — computed once on mount, never re-evaluated on re-renders
+  const [user] = useState(() => getUser());
   const [authState, setAuthState] = useState(
     // 'checking' if flag not yet set (e.g. session pre-dates this feature),
     // 'ok' if already confirmed, 'denied' if confirmed not super admin
@@ -26,7 +27,8 @@ export default function AdminPage() {
   );
 
   useEffect(() => {
-    if (!user || authState !== 'checking') return;
+    if (!user) { window.location.replace('/login'); return; }
+    if (authState !== 'checking') return;
     // Flag not in sessionStorage — re-verify against the backend
     fetch(`${API_BASE}/api/auth/verify`, {
       method: 'POST',
@@ -42,8 +44,11 @@ export default function AdminPage() {
       .catch(() => setAuthState('denied'));
   }, [user, authState]);
 
-  if (!user) { window.location.pathname = '/login'; return null; }
-  if (authState === 'denied') { window.location.pathname = '/projects'; return null; }
+  useEffect(() => {
+    if (authState === 'denied') window.location.replace('/projects');
+  }, [authState]);
+
+  if (!user || authState === 'denied') return null;
   if (authState === 'checking') {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#EDEDED' }}>
