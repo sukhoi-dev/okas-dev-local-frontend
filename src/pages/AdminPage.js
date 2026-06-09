@@ -18,10 +18,11 @@ const DARK   = '#1C1C1E';
 const BORDER = '#E8E8E8';
 
 const ROLE_BADGE_COLORS = {
-  super_admin:     { bg: '#FFF0D6', color: '#A0700A' },
-  si_admin:        { bg: '#E8F4FF', color: '#1565C0' },
-  programmer:      { bg: '#E8F9F0', color: '#1B6B3A' },
-  project_manager: { bg: '#F4E8FF', color: '#6A1BA0' },
+  super_admin:      { bg: '#FFF0D6', color: '#A0700A' },
+  distributor_admin:{ bg: '#FDE8F5', color: '#8B1A6B' },
+  si_admin:         { bg: '#E8F4FF', color: '#1565C0' },
+  programmer:       { bg: '#E8F9F0', color: '#1B6B3A' },
+  project_manager:  { bg: '#F4E8FF', color: '#6A1BA0' },
 };
 
 export default function AdminPage() {
@@ -293,7 +294,14 @@ function AdminPageInner({ user }) {
                     </div>
                   </td>
                   <td style={{ ...tdStyle, color: '#555' }}>{u.email}</td>
-                  <td style={{ ...tdStyle, color: '#555' }}>{u.org_name || '—'}</td>
+                  <td style={tdStyle}>
+                    <div>{u.org_name || '—'}</div>
+                    {u.org_type && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: u.org_type === 'distributor' ? '#8B1A6B' : '#1565C0', background: u.org_type === 'distributor' ? '#FDE8F5' : '#E8F4FF', padding: '1px 6px', borderRadius: 10 }}>
+                        {u.org_type === 'distributor' ? 'Distributor' : 'SI'}
+                      </span>
+                    )}
+                  </td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       {u.roles.length === 0
@@ -409,7 +417,15 @@ function UserForm({ form, setForm, orgs, roles, selRoles, setSelRoles, showRoles
       <FormField label="Organisation" required>
         <select value={form.organization_id || ''} onChange={f('organization_id')} style={{ ...inputStyle, background: '#fff' }}>
           <option value="">Select organisation…</option>
-          {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+          {['distributor', 'si'].map(type => {
+            const group = orgs.filter(o => o.org_type === type);
+            if (!group.length) return null;
+            return (
+              <optgroup key={type} label={type === 'distributor' ? 'Distributors' : 'System Integrators'}>
+                {group.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </optgroup>
+            );
+          })}
         </select>
       </FormField>
       {showRoles && roles && (
