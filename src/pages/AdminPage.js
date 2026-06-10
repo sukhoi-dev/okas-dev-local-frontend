@@ -73,7 +73,7 @@ function AdminPageInner({ user }) {
   const [orgFilter, setOrgFilter] = useState('');
 
   // Modal state
-  const [modal,   setModal]   = useState(null); // null | 'create' | 'edit' | 'delete' | 'roles'
+  const [modal,   setModal]   = useState(null); // null | 'create' | 'edit' | 'delete' | 'roles' | 'create-org'
   const [target,  setTarget]  = useState(null); // user being acted on
   const [saving,  setSaving]  = useState(false);
   const [err,     setErr]     = useState('');
@@ -81,6 +81,7 @@ function AdminPageInner({ user }) {
   // Form state
   const [form,    setForm]    = useState({});
   const [selRoles, setSelRoles] = useState([]);
+  const [orgForm, setOrgForm] = useState({ name: '', org_type: 'si', email: '', phone: '' });
 
   const loadUsers = useCallback(() => {
     const params = new URLSearchParams();
@@ -139,17 +140,38 @@ function AdminPageInner({ user }) {
   }
 
   async function handleCreate() {
+    if (!form.organization_id) { setErr('Please select an organisation first. Use "Add Organisation" to create one if needed.'); return; }
     setSaving(true); setErr('');
     try {
       const res = await fetch(`${API_BASE}/api/admin/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, role_ids: selRoles }),
+        body: JSON.stringify({ ...form, organization_id: parseInt(form.organization_id), role_ids: selRoles }),
       });
       const json = await res.json();
       if (!res.ok) { setErr(json.detail || 'Failed to create user'); setSaving(false); return; }
       closeModal();
       loadUsers();
+    } catch (e) { setErr(e.message); }
+    setSaving(false);
+  }
+
+  async function handleCreateOrg() {
+    if (!orgForm.name.trim()) { setErr('Organisation name is required'); return; }
+    setSaving(true); setErr('');
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/orgs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...orgForm, name: orgForm.name.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setErr(json.detail || 'Failed to create organisation'); setSaving(false); return; }
+      // Reload orgs and select the new one
+      const orgsRes = await fetch(`${API_BASE}/api/admin/orgs`).then(r => r.json());
+      const newOrgs = orgsRes.data || [];
+      setOrgs(newOrgs);
+      closeModal();
     } catch (e) { setErr(e.message); }
     setSaving(false);
   }
@@ -280,14 +302,23 @@ function AdminPageInner({ user }) {
             />
           </div>
 
-          <select
-            value={orgFilter}
-            onChange={e => setOrgFilter(e.target.value)}
-            style={{ border: '1.5px solid #D0D0D0', borderRadius: 6, padding: '9px 14px', fontSize: 14, background: '#fff', color: '#333', outline: 'none', minWidth: 160 }}
-          >
-            <option value="">All Organisations</option>
-            {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <select
+              value={orgFilter}
+              onChange={e => setOrgFilter(e.target.value)}
+              style={{ border: '1.5px solid #D0D0D0', borderRadius: 6, padding: '9px 14px', fontSize: 14, background: '#fff', color: orgs.length ? '#333' : '#999', outline: 'none', minWidth: 160 }}
+            >
+              <option value="">{orgs.length ? 'All Organisations' : 'No organisations yet'}</option>
+              {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+            <button
+              onClick={() => { setOrgForm({ name: '', org_type: 'si', email: '', phone: '' }); setErr(''); setModal('create-org'); }}
+              title="Add Organisation"
+              style={{ background: '#fff', border: '1.5px solid #D0D0D0', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#555' }}
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
 
           <button onClick={loadUsers} style={iconBtnStyle} title="Apply filters">
             <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#555" strokeWidth="2">
@@ -431,6 +462,14 @@ function AdminPageInner({ user }) {
           <ModalFooter onCancel={closeModal} onConfirm={handleDelete} confirmLabel="Delete" saving={saving} danger />
         </Modal>
       )}
+
+      {modal === 'create-org' && (
+        <Modal title="Add Organisation" onClose={closeModal} width={460}>
+          <OrgForm form={orgForm} setForm={setOrgForm} />
+          {err && <ErrorMsg msg={err} />}
+          <ModalFooter onCancel={closeModal} onConfirm={handleCreateOrg} confirmLabel="Create Organisation" saving={saving} />
+        </Modal>
+      )}
       </div>
     </div>
   );
@@ -482,6 +521,29 @@ function UserForm({ form, setForm, orgs, roles, selRoles, setSelRoles, showRoles
           </div>
         </FormField>
       )}
+    </div>
+  );
+}
+
+function OrgForm({ form, setForm }) {
+  const f = (k) => (e) => setForm(prev => ({ ...prev, [k]: e.target.value }));
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <FormField label="Organisation Name" required>
+        <input value={form.name || ''} onChange={f('name')} placeholder="Nexora Systems" style={inputStyle} autoFocus />
+      </FormField>
+      <FormField label="Type" required>
+        <select value={form.org_type} onChange={f('org_type')} style={{ ...inputStyle, background: '#fff' }}>
+          <option value="si">System Integrator (SI)</option>
+          <option value="distributor">Distributor</option>
+        </select>
+      </FormField>
+      <FormField label="Email">
+        <input value={form.email || ''} onChange={f('email')} placeholder="contact@company.com" type="email" style={inputStyle} />
+      </FormField>
+      <FormField label="Phone">
+        <input value={form.phone || ''} onChange={f('phone')} placeholder="+91 98765 43210" style={inputStyle} />
+      </FormField>
     </div>
   );
 }
