@@ -1,8 +1,8 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+﻿import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { CircularProgress, Box } from '@mui/material';
 import useAuthStore from '../features/auth/authStore';
 
-export default function PortalProtectedRoute({ loginPath }) {
+export default function PortalProtectedRoute({ loginPath = '/auth/login' }) {
   const { isAuthenticated, isLoading } = useAuthStore();
   const location = useLocation();
 

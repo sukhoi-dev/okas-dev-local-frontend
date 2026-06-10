@@ -5,6 +5,7 @@ import useAuthStore from '../../auth/authStore';
 import svgPaths from '../project-managers/assets/svg-members';
 import imgWeOkasLogo from '../../../assets/weOkasLogo.png';
 import imgAvatar from '../../../assets/avatar.png';
+import ProfileModal from '../_layout/ProfileModal';
 
 // ── Nav items per role ────────────────────────────────────────────────────────
 const NAV_CONFIG = {
@@ -73,8 +74,9 @@ export function TopNav() {
   const homePath = (NAV_CONFIG[user?.role] ?? NAV_CONFIG.pm)[0].path;
 
   // Avatar dropdown
-  const [avatarOpen, setAvatarOpen]   = useState(false);
-  const avatarRef                      = useRef(null);
+  const [avatarOpen, setAvatarOpen]     = useState(false);
+  const [profileOpen, setProfileOpen]   = useState(false);
+  const avatarRef                        = useRef(null);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -295,7 +297,7 @@ export function TopNav() {
           {avatarOpen && (
             <div className="absolute right-0 top-[48px] bg-white rounded-[8px] p-[8px] shadow-[0px_8px_32px_0px_rgba(10,30,63,0.12)] border border-[#e2e2e2] min-w-[200px] z-50">
               <button
-                onClick={() => setAvatarOpen(false)}
+                onClick={() => { setAvatarOpen(false); setProfileOpen(true); }}
                 className="w-full px-[16px] py-[12px] text-[14px] text-[#0a1e3f] rounded-[4px] hover:bg-[#f4f7fb] font-['Inter:Regular',sans-serif] flex items-center gap-[12px] text-left"
               >
                 <Settings size={16} />
@@ -313,6 +315,8 @@ export function TopNav() {
         </div>
 
       </div>
+
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }
