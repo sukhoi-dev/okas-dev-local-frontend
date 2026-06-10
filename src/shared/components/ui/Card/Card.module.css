@@ -1,0 +1,24 @@
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.p-sm { padding: 1rem; }
+.p-md { padding: 1.5rem; }
+.p-lg { padding: 2rem; }
+.p-none { padding: 0; }
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.title    { margin: 0; font-size: 1rem; font-weight: 600; color: #111827; }
+.subtitle { margin: 0.25rem 0 0; font-size: 0.875rem; color: #6b7280; }
+.action   { flex-shrink: 0; }
+.body     {}

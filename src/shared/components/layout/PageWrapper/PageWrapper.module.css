@@ -1,0 +1,6 @@
+.page    { padding: 1.5rem 2rem; max-width: 1400px; margin: 0 auto; }
+.header  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; }
+.title   { margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827; }
+.subtitle{ margin: 0.25rem 0 0; font-size: 0.9rem; color: #6b7280; }
+.action  { flex-shrink: 0; }
+.content {}
