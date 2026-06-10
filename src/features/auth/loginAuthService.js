@@ -1,59 +1,87 @@
-const BASE_URL = '/api';
+export const DEV_OTP_HINT = '123456';
 
-// ── Dev bypass ────────────────────────────────────────────────────────────────
-const DEV_EMAIL    = 'pm@weokas.com';
-const DEV_PASSWORD = 'pm@123';
-const DEV_OTP      = '123456';
-const DEV_TOKEN    = 'dev_mock_token';
-const DEV_USER     = { id: 'dev-001', name: 'PM User', email: DEV_EMAIL, role: 'admin' };
+const API_BASE = 'http://localhost:8000';
 
-function isMock(email) {
-  return email === DEV_EMAIL;
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function sendOtp(email) {
-  if (isMock(email)) return; // skip real API for dev credentials
-
-  const res = await fetch(`${BASE_URL}/members/auth/otp/send`, {
+async function _post(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(body),
   });
+  const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.message || data.detail || 'Failed to send OTP');
+    const msg =
+      json.message ||
+      (json.body && json.body.message) ||
+      'Authentication failed — check that the backend is running';
+    throw new Error(msg);
   }
+  return json;
 }
 
-export async function verifyOtp(email, otp) {
-  if (isMock(email)) {
-    if (otp === DEV_OTP) return { token: DEV_TOKEN, user: DEV_USER };
-    throw new Error('Invalid OTP. Use ' + DEV_OTP + ' for dev login.');
-  }
-
-  const res = await fetch(`${BASE_URL}/members/auth/otp/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, otp }),
+async function _get(path, token) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || data.detail || 'Invalid or expired OTP');
-  return { token: data.access_token, user: null };
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.message || 'Request failed');
+  return json;
 }
 
+function _normaliseResponse(json) {
+  const data = json.body;
+  const rawUser = data.user;
+  const roleName = rawUser.role?.name ?? rawUser.role ?? null;
+  return {
+    token: data.access_token,
+    user: { ...rawUser, role: roleName },
+  };
+}
+
+/**
+ * Email + password login.
+ * Step 1 — POST /we-okas/auth/login  → JWT + user profile
+ * Step 2 — GET  /we-okas/auth/permissions  → full permissions (flat + grouped)
+ */
 export async function loginWithPassword(email, password) {
-  if (isMock(email)) {
-    if (password === DEV_PASSWORD) return { token: DEV_TOKEN, user: DEV_USER };
-    throw new Error('Invalid password. Use ' + DEV_PASSWORD + ' for dev login.');
-  }
+  const json      = await _post('/we-okas/auth/login', { email, password });
+  const { token, user } = _normaliseResponse(json);
+  const permsData = await fetchPermissions(token);
+  return { token, user, permissionsData: permsData };
+}
 
-  const res = await fetch(`${BASE_URL}/members/auth/login/password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.detail || data.message || 'Invalid email or password');
-  return { token: data.access_token, user: null };
+/**
+ * Fetch full permissions for the given JWT.
+ * Returns { flat: [...], grouped: { feature: [action, ...] } }
+ */
+export async function fetchPermissions(token) {
+  try {
+    const json = await _get('/we-okas/auth/permissions', token);
+    return json.body?.permissions ?? { flat: [], grouped: {} };
+  } catch {
+    return { flat: [], grouped: {} };
+  }
+}
+
+/**
+ * "Send OTP" step — validates the email exists; no OTP email is sent in dev.
+ */
+export async function sendOtp(email) {
+  await _post('/we-okas/auth/token', { email });
+}
+
+/**
+ * "Verify OTP" step — OTP is not validated server-side in dev.
+ * Step 1 — POST /we-okas/auth/token  → JWT + user profile
+ * Step 2 — GET  /we-okas/auth/permissions  → full permissions (flat + grouped)
+ */
+export async function verifyOtp(email, _otp) {
+  const json = await _post('/we-okas/auth/token', { email });
+  const { token, user } = _normaliseResponse(json);
+  const permsData = await fetchPermissions(token);
+  return { token, user, permissionsData: permsData };
 }

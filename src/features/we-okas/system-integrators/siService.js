@@ -1,4 +1,36 @@
-import apiClient from '../../../api/client';
-import { SYSTEM_INTEGRATORS } from '../../../api/endpoints';
-const siService = { list: (p) => apiClient.get(SYSTEM_INTEGRATORS.LIST, { params: p }).then((r) => r.data), detail: (id) => apiClient.get(SYSTEM_INTEGRATORS.DETAIL(id)).then((r) => r.data), create: (d) => apiClient.post(SYSTEM_INTEGRATORS.CREATE, d).then((r) => r.data), update: (id, d) => apiClient.put(SYSTEM_INTEGRATORS.UPDATE(id), d).then((r) => r.data), delete: (id) => apiClient.delete(SYSTEM_INTEGRATORS.DELETE(id)).then((r) => r.data) };
+const API_BASE = 'http://localhost:8000/we-okas/organizations';
+
+function _authHeaders() {
+  const token = localStorage.getItem('okas_access_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+async function _request(method, path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: _authHeaders(),
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(json.message || 'Request failed');
+  }
+  return json;
+}
+
+const siService = {
+  list:   (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v != null && v !== ''))
+    ).toString();
+    return _request('GET', qs ? `?${qs}` : '');
+  },
+  create: (data)     => _request('POST', '', data),
+  update: (id, data) => _request('PUT', `/${id}`, data),
+  delete: (id)       => _request('DELETE', `/${id}`),
+};
+
 export default siService;
