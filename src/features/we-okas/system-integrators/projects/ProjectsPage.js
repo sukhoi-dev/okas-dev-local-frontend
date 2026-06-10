@@ -4,6 +4,7 @@ import FilterDropdown from '../../project-managers/FilterDropdown';
 import AddProjectDrawer from './AddProjectDrawer';
 import { useProjects } from './useProjects';
 import projectService from './projectService';
+import { TopNav, LeftNav } from '../../shared/SharedNav';
 
 function mapApiProject(p) {
   const addressParts = [p.address, p.landmark].filter(Boolean).join(', ');
@@ -226,7 +227,11 @@ export default function ProjectsPage() {
   const activeFilterCount = Object.values(appliedFilters).reduce((acc, arr) => acc + arr.length, 0);
 
   return (
-    <div className="bg-[#f4f7fb] flex flex-col gap-[28px] items-start overflow-y-auto pb-[40px] pt-[32px] px-[40px] w-full h-full">
+    <div className="bg-white flex flex-col h-screen w-full overflow-hidden">
+      <TopNav />
+      <div className="flex flex-1 overflow-hidden">
+        <LeftNav />
+    <div className="bg-[#f4f7fb] flex flex-col gap-[28px] items-start overflow-y-auto pb-[40px] pt-[32px] px-[40px] flex-1 h-full">
       {/* Page Title */}
       <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[1.1] text-[#0a1e3f] text-[40px] tracking-[-0.8px]">Projects</p>
 
@@ -408,6 +413,8 @@ export default function ProjectsPage() {
         initialData={editData}
         projectId={editId}
       />
+    </div>
+      </div>
     </div>
   );
 }
