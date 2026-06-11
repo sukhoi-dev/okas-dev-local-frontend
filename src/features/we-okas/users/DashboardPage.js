@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import svgPaths from '../project-managers/assets/svg-dashboard-projects';
 import FilterDropdown from '../project-managers/FilterDropdown';
-import AddProjectDrawer from '../project-managers/AddProjectDrawer';
+import AddProjectDrawer from '../system-integrators/projects/AddProjectDrawer';
 import { TopNav, LeftNav } from '../shared/SharedNav';
 import { DUMMY_PROJECTS } from '../project-managers/dummyData';
 

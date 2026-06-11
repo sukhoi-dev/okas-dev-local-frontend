@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import svgPaths from './assets/svg-add-project';
-import { DUMMY_MEMBERS } from './dummyData';
+import svgPaths from '../../project-managers/assets/svg-add-project';
+import projectService from './projectService';
+import { useCreateProject, useUpdateProject } from './useProjects';
 
 const emptyForm = {
+  projectName: '',
   buildingId: '',
   buildingType: 'Residential',
   address: '',
@@ -20,19 +22,51 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
   const [formData, setFormData] = useState(initialData ?? emptyForm);
   const [error, setError] = useState(null);
   const [members, setMembers] = useState([]);
+  const { mutateAsync: createProject, isPending: isCreating } = useCreateProject();
+  const { mutateAsync: updateProject, isPending: isUpdating } = useUpdateProject();
+  const isPending = isCreating || isUpdating;
 
   useEffect(() => {
     if (isOpen) {
       setFormData(initialData ?? emptyForm);
       setError(null);
-      setMembers(DUMMY_MEMBERS.map(m => ({ id: m.id, name: m.full_name })));
+      projectService.getMembers()
+        .then(data => {
+          console.log('[getMembers] response:', data);
+          const list = data?.body?.members ?? data?.body?.data ?? data?.members ?? data?.data ?? (Array.isArray(data?.body) ? data.body : Array.isArray(data) ? data : []);
+          console.log('[getMembers] parsed list:', list);
+          setMembers(list.map(m => ({ id: m.id, name: m.full_name || m.name || String(m.id) })));
+        })
+        .catch((err) => { console.error('[getMembers] error:', err); setMembers([]); });
     }
   }, [isOpen, initialData]);
 
-  const handleSubmit = () => {
-    onSave(formData);
-    setFormData(emptyForm);
-    onClose();
+  const handleSubmit = async () => {
+    setError(null);
+    const payload = {
+      name: formData.projectName,
+      project_type: formData.buildingType.toLowerCase(),
+      address: formData.address,
+      notes: formData.landmark,
+      project_manager_id: formData.assignedMember,
+      serial_number: formData.serialNumber,
+      homeowner: {
+        full_name: formData.contactName,
+        phone: `${formData.phoneCountryCode}${formData.phoneNumber}`,
+        email: formData.email,
+      },
+    };
+    try {
+      if (mode === 'edit') {
+        await updateProject({ id: projectId, payload });
+      } else {
+        await createProject(payload);
+      }
+      setFormData(emptyForm);
+      onSave();
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || `Failed to ${mode === 'edit' ? 'update' : 'create'} project`);
+    }
   };
 
   const handleCancel = () => {
@@ -93,9 +127,21 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                   </div>
                   <div className="bg-white rounded-[4px] border border-[#e2e2e2] p-[16px] md:p-[20px] flex flex-col gap-[16px]">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col gap-[8px] w-full">
-                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">BUILDING ID</label>
-                      <motion.input type="text" value={formData.buildingId} onChange={(e) => setFormData({ ...formData, buildingId: e.target.value })} placeholder="Enter Building ID" whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full" />
+                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">PROJECT NAME</label>
+                      <motion.input type="text" value={formData.projectName} onChange={(e) => setFormData({ ...formData, projectName: e.target.value })} placeholder="Enter project name" whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full" />
                     </motion.div>
+
+                    {mode === 'edit' && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="flex flex-col gap-[8px] w-full">
+                        <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">BUILDING ID</label>
+                        <input
+                          type="text"
+                          value={formData.buildingId}
+                          readOnly
+                          className="bg-[#eef0f4] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#5c7089] border-none outline-none cursor-not-allowed w-full"
+                        />
+                      </motion.div>
+                    )}
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="flex flex-col gap-[8px] w-full">
                       <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">BUILDING TYPE</label>
@@ -126,7 +172,7 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                       <div className="relative">
                         <motion.select value={formData.assignedMember} onChange={(e) => setFormData({ ...formData, assignedMember: e.target.value })} whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] pr-[40px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full appearance-none cursor-pointer">
                           <option value="">Select member</option>
-                          {members.map((m) => (<option key={m.id} value={m.name}>{m.name}</option>))}
+                          {members.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
                         </motion.select>
                         <svg className="absolute right-[16px] top-1/2 -translate-y-1/2 size-[16px] md:size-[18px] pointer-events-none" fill="none" viewBox="0 0 18 18">
                           <path d="M4.5 7.2L9 10.8L13.5 7.2" stroke="#5C7089" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.26" />
@@ -140,7 +186,7 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="flex flex-col gap-[12px] w-full">
                   <div className="flex font-['Inter:Medium',sans-serif] font-medium gap-[10px] items-center leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">
                     <p>02</p>
-                    <p>PRIMARY CONTACT DETAILS</p>
+                    <p>OWNER DETAILS</p>
                   </div>
                   <div className="bg-white rounded-[4px] border border-[#e2e2e2] p-[16px] md:p-[20px] flex flex-col gap-[16px]">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-col gap-[8px] w-full">
@@ -196,8 +242,8 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                 <motion.button onClick={handleCancel} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1 h-[44px] md:h-[48px] rounded-[4px] border border-[#e2e2e2] font-['Inter:Medium',sans-serif] font-medium text-[14px] text-[#5c7089] hover:bg-[#f4f7fb] transition-colors">
                   Cancel
                 </motion.button>
-                <motion.button onClick={handleSubmit} whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="flex-1 h-[44px] md:h-[48px] rounded-[4px] bg-[#0a1e3f] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-white hover:bg-[#0a2a5a] transition-colors shadow-sm hover:shadow-lg">
-                  {mode === 'edit' ? 'Update Project' : 'Save Project'}
+                <motion.button onClick={handleSubmit} disabled={isPending} whileHover={isPending ? {} : { scale: 1.02, y: -2 }} whileTap={isPending ? {} : { scale: 0.98 }} className="flex-1 h-[44px] md:h-[48px] rounded-[4px] bg-[#0a1e3f] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-white hover:bg-[#0a2a5a] transition-colors shadow-sm hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed">
+                  {isPending ? 'Saving…' : mode === 'edit' ? 'Update Project' : 'Save Project'}
                 </motion.button>
               </div>
             </div>

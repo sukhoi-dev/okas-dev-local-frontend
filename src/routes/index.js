@@ -4,7 +4,6 @@ import ProtectedRoute from './ProtectedRoute';
 import PortalProtectedRoute from './PortalProtectedRoute';
 import PlaceholderPage from '../features/we-okas/shared/PlaceholderPage';
 import DashboardHome from '../features/we-okas/shared/DashboardHome';
-
 // Auth
 const LoginPage          = lazy(() => import('../features/auth/LoginPage'));
 const OtpPage            = lazy(() => import('../features/auth/OtpPage'));
@@ -22,7 +21,7 @@ const DistributorSIListing = lazy(() => import('../features/we-okas/distributors
 // SI portal
 const SIProjects = lazy(() => import('../features/we-okas/system-integrators/DashboardPage'));
 const SIMembers  = lazy(() => import('../features/we-okas/system-integrators/Members'));
-
+const Projects = lazy(() => import('../features/we-okas/system-integrators/projects/ProjectsPage'));
 // User portal
 const UserProjects = lazy(() => import('../features/we-okas/users/DashboardPage'));
 const UserMembers  = lazy(() => import('../features/we-okas/users/Members'));
@@ -63,10 +62,11 @@ export default function AppRouter() {
       {/* SI portal */}
       <Route element={<PortalProtectedRoute loginPath="/auth/login" />}>
         <Route path="/si/dashboard" element={<DashboardHome />} />
-        <Route path="/si/projects"  element={<S><SIProjects /></S>} />
+        <Route path="/si/projects"  element={<S><Projects /></S>} />
         <Route path="/si/members"   element={<S><SIMembers /></S>} />
         <Route path="/si/roles"     element={<PlaceholderPage />} />
         <Route path="/si/support"   element={<PlaceholderPage />} />
+        <Route path="/projectss"  element={<S><Projects /></S>} />
       </Route>
 
       {/* User portal */}
