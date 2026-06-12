@@ -18,7 +18,7 @@ const PMMembers  = lazy(() => import('../features/we-okas/project-managers/Membe
 // Distributor portal
 const DistributorProjects  = lazy(() => import('../features/we-okas/distributors/DistributorProjectsPage'));
 const DistributorMembers   = lazy(() => import('../features/we-okas/distributors/Members'));
-const DistributorSIListing = lazy(() => import('../features/we-okas/distributors/SystemIntegratorsListPage'));
+const DistributorSIListing = lazy(() => import('../features/we-okas/system-integrators/SystemIntegratorsListPage'));
 
 // SI portal
 const SIProjects = lazy(() => import('../features/we-okas/system-integrators/DashboardPage'));
@@ -83,7 +83,7 @@ export default function AppRouter() {
         <Route path="/user/support"   element={<PlaceholderPage />} />
       </Route>
 
-      {/* Design Studio standalone */}
+      {/* Design Studio */}
       <Route path="/studio" element={<S><DesignStudioApp /></S>} />
 
       <Route path="*" element={<Navigate to="/auth/login" replace />} />

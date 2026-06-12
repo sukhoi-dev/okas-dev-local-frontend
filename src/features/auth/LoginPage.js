@@ -32,12 +32,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    if (!email || !password || !agreedToTerms) return;
+    if (!email || !agreedToTerms) return;
     setError('');
     setIsLoading(true);
     try {
-      const { token, user } = await loginWithPassword(email, password);
-      storeLogin(user, token, null);
+      const { token, user, permissionsData } = await loginWithPassword(email, password);
+      storeLogin(user, token, null, permissionsData?.flat ?? [], permissionsData?.grouped ?? {});
       navigate(getRoleRedirectPath(user));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -209,7 +209,7 @@ export default function LoginPage() {
               <motion.button
                 type="button"
                 onClick={handleLogin}
-                disabled={!agreedToTerms || !email || !password || isLoading}
+                disabled={!agreedToTerms || !email || isLoading}
                 whileHover={agreedToTerms && email && password && !isLoading ? { scale: 1.02, y: -2 } : {}}
                 whileTap={agreedToTerms && email && password && !isLoading ? { scale: 0.98 } : {}}
                 className="bg-[#0a1e3f] h-[60px] relative rounded-[4px] shrink-0 w-full disabled:opacity-50 hover:bg-[#0a2a5a] transition-all disabled:hover:bg-[#0a1e3f] shadow-sm hover:shadow-lg disabled:shadow-none"
@@ -221,7 +221,7 @@ export default function LoginPage() {
                     </p>
                     {!isLoading && (
                       <motion.svg
-                        animate={agreedToTerms && email && password ? { x: [0, 3, 0] } : {}}
+                        animate={agreedToTerms && email ? { x: [0, 3, 0] } : {}}
                         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                         className="shrink-0 size-[22px]" fill="none" viewBox="0 0 22 22"
                       >
