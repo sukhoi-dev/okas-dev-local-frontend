@@ -22,9 +22,7 @@ const ProjectDetail        = lazy(() => import('../features/we-okas/projects/Pro
 const DistributorsPage     = lazy(() => import('../features/we-okas/distributors/DistributorsPage'));
 const SystemIntegratorsPage= lazy(() => import('../features/we-okas/system-integrators/SystemIntegratorsPage'));
 const ProjectManagersPage  = lazy(() => import('../features/we-okas/project-managers/ProjectManagersPage'));
-const UsersPage            = lazy(() => import('../features/we-okas/users/UsersPage'));
 const OrganizationsPage    = lazy(() => import('../features/we-okas/organizations/OrganizationsPage'));
-const RolesPage            = lazy(() => import('../features/we-okas/roles-permissions/RolesPage'));
 const ReportsPage          = lazy(() => import('../features/we-okas/reports/ReportsPage'));
 const NotificationsPage    = lazy(() => import('../features/we-okas/notifications/NotificationsPage'));
 const SettingsPage         = lazy(() => import('../features/we-okas/settings/SettingsPage'));
@@ -39,9 +37,9 @@ export default function WEOKASRoutes() {
       <Route path="distributors"       element={<Wrap><Guard roles={[ROLES.ADMIN]}><DistributorsPage /></Guard></Wrap>} />
       <Route path="system-integrators" element={<Wrap><Guard roles={[ROLES.ADMIN, ROLES.DISTRIBUTOR]}><SystemIntegratorsPage /></Guard></Wrap>} />
       <Route path="project-managers"   element={<Wrap><Guard roles={[ROLES.ADMIN, ROLES.DISTRIBUTOR]}><ProjectManagersPage /></Guard></Wrap>} />
-      <Route path="users"              element={<Wrap><UsersPage /></Wrap>} />
+      <Route path="users"              element={<Navigate to="/members" replace />} />
       <Route path="organizations"      element={<Wrap><Guard roles={[ROLES.ADMIN]}><OrganizationsPage /></Guard></Wrap>} />
-      <Route path="roles-permissions"  element={<Wrap><Guard roles={[ROLES.ADMIN]}><RolesPage /></Guard></Wrap>} />
+      <Route path="roles-permissions"  element={<Navigate to="/roles-permissions" replace />} />
       <Route path="reports"            element={<Wrap><ReportsPage /></Wrap>} />
       <Route path="notifications"      element={<Wrap><NotificationsPage /></Wrap>} />
       <Route path="settings"           element={<Wrap><SettingsPage /></Wrap>} />

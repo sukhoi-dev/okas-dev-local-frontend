@@ -16,8 +16,8 @@ const NAV_ITEMS = [
   { name: 'Home',                 path: '/dashboard',                Icon: Home       },
   { name: 'System Integrators',   path: ROUTE_PATHS.WEOKAS_SIS,      Icon: Boxes,     permission: 'organizations.manage' },
   { name: 'Projects',             path: ROUTE_PATHS.WEOKAS_PROJECTS,  Icon: FolderOpen },
-  { name: 'Members',              path: '/we-okas/users',             Icon: Users      },
-  { name: 'Roles &\nPermissions', path: ROUTE_PATHS.WEOKAS_ROLES,     Icon: UserCheck  },
+  { name: 'Members',              path: '/members',                   Icon: Users      },
+  { name: 'Roles &\nPermissions', path: '/roles-permissions',         Icon: UserCheck  },
   { name: 'Support',              path: '#',                          Icon: Headphones },
 ];
 

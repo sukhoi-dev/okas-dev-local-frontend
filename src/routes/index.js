@@ -5,6 +5,7 @@ import PortalProtectedRoute from './PortalProtectedRoute';
 import WEOKASRoutes from './WEOKASRoutes';
 import PlaceholderPage from '../features/we-okas/shared/PlaceholderPage';
 import DashboardHome from '../features/we-okas/shared/DashboardHome';
+import AppShell from '../features/we-okas/_layout/AppShell';
 
 // Auth
 const LoginPage          = lazy(() => import('../features/auth/LoginPage'));
@@ -13,7 +14,10 @@ const ForgotPasswordPage = lazy(() => import('../features/auth/ForgotPasswordPag
 
 // PM portal
 const PMProjects = lazy(() => import('../features/we-okas/project-managers/ProjectManagersPage'));
-const PMMembers  = lazy(() => import('../features/we-okas/project-managers/Members'));
+
+// Members & Roles — real backend data with AppShell
+const UsersPage  = lazy(() => import('../features/we-okas/users/UsersPage'));
+const RolesPage  = lazy(() => import('../features/we-okas/roles-permissions/RolesPage'));
 
 // Distributor portal
 const DistributorProjects  = lazy(() => import('../features/we-okas/distributors/DistributorProjectsPage'));
@@ -48,12 +52,13 @@ export default function AppRouter() {
         {WEOKASRoutes()}
       </Route>
 
-      {/* PM portal */}
+      {/* PM portal + shared AppShell pages */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<DashboardHome />} />
-        <Route path="/projects"  element={<S><PMProjects /></S>} />
-        <Route path="/members"   element={<S><PMMembers /></S>} />
-        <Route path="/support"   element={<PlaceholderPage />} />
+        <Route path="/dashboard"          element={<DashboardHome />} />
+        <Route path="/projects"           element={<S><PMProjects /></S>} />
+        <Route path="/members"            element={<S><AppShell><UsersPage /></AppShell></S>} />
+        <Route path="/roles-permissions"  element={<S><AppShell><RolesPage /></AppShell></S>} />
+        <Route path="/support"            element={<PlaceholderPage />} />
       </Route>
 
       {/* Distributor portal */}

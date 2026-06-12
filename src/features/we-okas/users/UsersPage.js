@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Filter, Plus, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
-import AppShell from '../_layout/AppShell';
 import MemberFormDrawer from './MemberFormDrawer';
 import { useMembers, useDeleteMember } from './useMembers';
 import useAuthStore from '../../auth/authStore';
@@ -119,7 +118,7 @@ export default function UsersPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <div className="flex flex-col gap-[24px] px-[40px] pt-[32px] pb-[48px]">
 
         {/* Title */}
@@ -260,6 +259,6 @@ export default function UsersPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </AppShell>
+    </>
   );
 }
