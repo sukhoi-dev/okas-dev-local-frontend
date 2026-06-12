@@ -14,6 +14,7 @@ const useAuthStore = create(
       error: null,
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
+      setUser: (user) => set({ user }),
 
       login: (user, accessToken, refreshToken, permissions = [], permissionsGrouped = {}) => {
         localStorage.setItem(env.AUTH_TOKEN_KEY, accessToken);

@@ -18,7 +18,7 @@ const PMMembers  = lazy(() => import('../features/we-okas/project-managers/Membe
 // Distributor portal
 const DistributorProjects  = lazy(() => import('../features/we-okas/distributors/DistributorProjectsPage'));
 const DistributorMembers   = lazy(() => import('../features/we-okas/distributors/Members'));
-const DistributorSIListing = lazy(() => import('../features/we-okas/system-integrators/SystemIntegratorsListPage'));
+const DistributorSIListing = lazy(() => import('../features/we-okas/distributors/SystemIntegratorsListPage'));
 
 // SI portal
 const SIProjects = lazy(() => import('../features/we-okas/system-integrators/DashboardPage'));

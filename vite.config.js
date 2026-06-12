@@ -3,13 +3,21 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/setupTests.js',
+  },
   server: {
     proxy: {
-      // Legacy / AWS API Gateway
       '/api': {
-        target: 'https://smt1vtu28a.execute-api.ap-south-1.amazonaws.com/dev',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      '/auth': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
       },
     },
   },

@@ -11,7 +11,9 @@ const processQueue = (error, token = null) => {
 
 export function applyInterceptors(client) {
   client.interceptors.request.use((config) => {
-    const token = localStorage.getItem(env.AUTH_TOKEN_KEY);
+    const jwt     = localStorage.getItem('okas_jwt_token');
+    const session = localStorage.getItem(env.AUTH_TOKEN_KEY);
+    const token   = jwt || session;
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   }, Promise.reject);

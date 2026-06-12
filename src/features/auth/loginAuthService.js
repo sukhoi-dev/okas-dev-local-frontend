@@ -36,7 +36,7 @@ export async function fetchPermissions(token) {
 export async function sendOtp(email) {
   if (isMock(email)) return;
 
-  const res = await fetch(`${BASE_URL}/members/auth/otp/send`, {
+  const res = await fetch(`/auth/otp/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
@@ -53,7 +53,7 @@ export async function verifyOtp(email, otp) {
     return { token: 'dev_mock_token', user: MOCK_USERS[email], permissionsData: { flat: [], grouped: {} } };
   }
 
-  const res = await fetch(`${BASE_URL}/members/auth/otp/verify`, {
+  const res = await fetch(`/auth/otp/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, otp }),
@@ -61,8 +61,10 @@ export async function verifyOtp(email, otp) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || data.detail || 'Invalid or expired OTP');
 
-  const token = data.access_token;
-  const permissionsData = await fetchPermissions(token);
+  const token = data.token;             // session token — used for /auth/me
+  const jwt   = data.access_token;      // JWT — used for JWT-protected routes
+  if (jwt) localStorage.setItem('okas_jwt_token', jwt);
+  const permissionsData = await fetchPermissions(jwt);
   return { token, user: data.user ?? null, permissionsData };
 }
 
@@ -84,4 +86,35 @@ export async function loginWithPassword(email, password) {
   const token = data.access_token;
   const permissionsData = await fetchPermissions(token);
   return { token, user: data.user ?? null, permissionsData };
+}
+
+export async function loginWithGoogle(access_token, keepLoggedIn = false) {
+  const res = await fetch('/auth/google/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ access_token, keep_logged_in: keepLoggedIn }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || data.message || 'Google sign-in failed');
+  return { token: data.token, user: data.user };
+}
+
+export async function validateSession() {
+  const token = localStorage.getItem('okas_access_token') || sessionStorage.getItem('okas_access_token');
+  if (!token) return null;
+  const res = await fetch('/auth/me', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  return data?.user ?? null;
+}
+
+export async function logoutUser() {
+  const token = localStorage.getItem('okas_access_token') || sessionStorage.getItem('okas_access_token');
+  if (!token) return;
+  await fetch('/auth/logout', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  }).catch(() => {});
 }
