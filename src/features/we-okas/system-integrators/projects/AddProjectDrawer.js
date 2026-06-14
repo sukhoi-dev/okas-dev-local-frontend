@@ -18,9 +18,32 @@ const emptyForm = {
   serialNumber: '',
 };
 
+function validate(formData) {
+  const errors = {};
+  if (!formData.projectName.trim()) errors.projectName = 'Project name is required';
+  if (!formData.address.trim()) errors.address = 'Address is required';
+  if (!formData.assignedMember) errors.assignedMember = 'Please select an assigned member';
+  if (!formData.contactName.trim()) errors.contactName = 'Owner name is required';
+  if (!formData.phoneNumber.trim()) {
+    errors.phoneNumber = 'Phone number is required';
+  } else if (!/^\d+$/.test(formData.phoneNumber)) {
+    errors.phoneNumber = 'Phone number must contain digits only';
+  } else if (formData.phoneCountryCode === '+91' && formData.phoneNumber.length !== 10) {
+    errors.phoneNumber = 'Phone number must be 10 digits';
+  }
+  if (!formData.email.trim()) {
+    errors.email = 'Email is required';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    errors.email = 'Enter a valid email address';
+  }
+  if (!formData.serialNumber.trim()) errors.serialNumber = 'Serial number is required';
+  return errors;
+}
+
 export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'create', initialData, projectId }) {
   const [formData, setFormData] = useState(initialData ?? emptyForm);
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [members, setMembers] = useState([]);
   const { mutateAsync: createProject, isPending: isCreating } = useCreateProject();
   const { mutateAsync: updateProject, isPending: isUpdating } = useUpdateProject();
@@ -30,6 +53,7 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
     if (isOpen) {
       setFormData(initialData ?? emptyForm);
       setError(null);
+      setFieldErrors({});
       projectService.getMembers()
         .then(data => {
           console.log('[getMembers] response:', data);
@@ -43,6 +67,12 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
 
   const handleSubmit = async () => {
     setError(null);
+    const errors = validate(formData);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
     const payload = {
       name: formData.projectName,
       project_type: formData.buildingType.toLowerCase(),
@@ -72,7 +102,13 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
   const handleCancel = () => {
     setFormData(emptyForm);
     setError(null);
+    setFieldErrors({});
     onClose();
+  };
+
+  const setField = (key, value) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+    setFieldErrors(prev => ({ ...prev, [key]: undefined }));
   };
 
   return (
@@ -126,13 +162,8 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                     <p>PROJECT DETAILS</p>
                   </div>
                   <div className="bg-white rounded-[4px] border border-[#e2e2e2] p-[16px] md:p-[20px] flex flex-col gap-[16px]">
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col gap-[8px] w-full">
-                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">PROJECT NAME</label>
-                      <motion.input type="text" value={formData.projectName} onChange={(e) => setFormData({ ...formData, projectName: e.target.value })} placeholder="Enter project name" whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full" />
-                    </motion.div>
-
                     {mode === 'edit' && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="flex flex-col gap-[8px] w-full">
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="flex flex-col gap-[8px] w-full">
                         <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">BUILDING ID</label>
                         <input
                           type="text"
@@ -142,6 +173,12 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                         />
                       </motion.div>
                     )}
+
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col gap-[8px] w-full">
+                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">PROJECT NAME <span className="text-red-500">*</span></label>
+                      <motion.input type="text" value={formData.projectName} onChange={(e) => setField('projectName', e.target.value)} placeholder="Enter project name" whileFocus={{ scale: 1.01, y: -1 }} className={`bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full ${fieldErrors.projectName ? 'border-red-400' : 'border-transparent'}`} />
+                      {fieldErrors.projectName && <p className="text-[11px] text-red-500 font-['Inter:Regular',sans-serif]">{fieldErrors.projectName}</p>}
+                    </motion.div>
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="flex flex-col gap-[8px] w-full">
                       <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">BUILDING TYPE</label>
@@ -158,8 +195,9 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                     </motion.div>
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-col gap-[8px] w-full">
-                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">ADDRESS</label>
-                      <motion.input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Enter address" whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full" />
+                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">ADDRESS <span className="text-red-500">*</span></label>
+                      <motion.input type="text" value={formData.address} onChange={(e) => setField('address', e.target.value)} placeholder="Enter address" whileFocus={{ scale: 1.01, y: -1 }} className={`bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full ${fieldErrors.address ? 'border-red-400' : 'border-transparent'}`} />
+                      {fieldErrors.address && <p className="text-[11px] text-red-500 font-['Inter:Regular',sans-serif]">{fieldErrors.address}</p>}
                     </motion.div>
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="flex flex-col gap-[8px] w-full">
@@ -168,9 +206,9 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                     </motion.div>
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col gap-[8px] w-full">
-                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">ASSIGNED MEMBER</label>
+                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">ASSIGNED MEMBER <span className="text-red-500">*</span></label>
                       <div className="relative">
-                        <motion.select value={formData.assignedMember} onChange={(e) => setFormData({ ...formData, assignedMember: e.target.value })} whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] pr-[40px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full appearance-none cursor-pointer">
+                        <motion.select value={formData.assignedMember} onChange={(e) => setField('assignedMember', e.target.value)} whileFocus={{ scale: 1.01, y: -1 }} className={`bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] pr-[40px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full appearance-none cursor-pointer ${fieldErrors.assignedMember ? 'border-red-400' : 'border-transparent'}`}>
                           <option value="">Select member</option>
                           {members.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
                         </motion.select>
@@ -178,6 +216,7 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                           <path d="M4.5 7.2L9 10.8L13.5 7.2" stroke="#5C7089" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.26" />
                         </svg>
                       </div>
+                      {fieldErrors.assignedMember && <p className="text-[11px] text-red-500 font-['Inter:Regular',sans-serif]">{fieldErrors.assignedMember}</p>}
                     </motion.div>
                   </div>
                 </div>
@@ -190,15 +229,16 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                   </div>
                   <div className="bg-white rounded-[4px] border border-[#e2e2e2] p-[16px] md:p-[20px] flex flex-col gap-[16px]">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-col gap-[8px] w-full">
-                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">NAME</label>
-                      <motion.input type="text" value={formData.contactName} onChange={(e) => setFormData({ ...formData, contactName: e.target.value })} placeholder="Enter name" whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full" />
+                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">NAME <span className="text-red-500">*</span></label>
+                      <motion.input type="text" value={formData.contactName} onChange={(e) => setField('contactName', e.target.value)} placeholder="Enter name" whileFocus={{ scale: 1.01, y: -1 }} className={`bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full ${fieldErrors.contactName ? 'border-red-400' : 'border-transparent'}`} />
+                      {fieldErrors.contactName && <p className="text-[11px] text-red-500 font-['Inter:Regular',sans-serif]">{fieldErrors.contactName}</p>}
                     </motion.div>
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="flex flex-col gap-[8px] w-full">
-                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">PHONE NUMBER</label>
+                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">PHONE NUMBER <span className="text-red-500">*</span></label>
                       <div className="flex gap-[8px] w-full">
                         <div className="relative w-[88px]">
-                          <motion.select value={formData.phoneCountryCode} onChange={(e) => setFormData({ ...formData, phoneCountryCode: e.target.value })} whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[12px] pr-[32px] font-['Inter:Medium',sans-serif] font-medium text-[14px] md:text-[15px] text-[#0a1e3f] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full appearance-none cursor-pointer">
+                          <motion.select value={formData.phoneCountryCode} onChange={(e) => setField('phoneCountryCode', e.target.value)} whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[12px] pr-[32px] font-['Inter:Medium',sans-serif] font-medium text-[14px] md:text-[15px] text-[#0a1e3f] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full appearance-none cursor-pointer">
                             <option value="+91">+91</option>
                             <option value="+1">+1</option>
                             <option value="+44">+44</option>
@@ -208,13 +248,15 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                             <path d="M4.5 7.2L9 10.8L13.5 7.2" stroke="#5C7089" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.26" />
                           </svg>
                         </div>
-                        <motion.input type="tel" value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} placeholder="00000 00000" whileFocus={{ scale: 1.01, y: -1 }} className="flex-1 bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all" />
+                        <motion.input type="tel" value={formData.phoneNumber} onChange={(e) => setField('phoneNumber', e.target.value)} placeholder="00000 00000" whileFocus={{ scale: 1.01, y: -1 }} className={`flex-1 bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all ${fieldErrors.phoneNumber ? 'border-red-400' : 'border-transparent'}`} />
                       </div>
+                      {fieldErrors.phoneNumber && <p className="text-[11px] text-red-500 font-['Inter:Regular',sans-serif]">{fieldErrors.phoneNumber}</p>}
                     </motion.div>
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="flex flex-col gap-[8px] w-full">
-                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">EMAIL</label>
-                      <motion.input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="abc@xyz.com" whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full" />
+                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">EMAIL <span className="text-red-500">*</span></label>
+                      <motion.input type="email" value={formData.email} onChange={(e) => setField('email', e.target.value)} placeholder="abc@xyz.com" whileFocus={{ scale: 1.01, y: -1 }} className={`bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full ${fieldErrors.email ? 'border-red-400' : 'border-transparent'}`} />
+                      {fieldErrors.email && <p className="text-[11px] text-red-500 font-['Inter:Regular',sans-serif]">{fieldErrors.email}</p>}
                     </motion.div>
                   </div>
                 </motion.div>
@@ -227,8 +269,9 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                   </div>
                   <div className="bg-white rounded-[4px] border border-[#e2e2e2] p-[16px] md:p-[20px] flex flex-col gap-[16px]">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="flex flex-col gap-[8px] w-full">
-                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">SERIAL NUMBER</label>
-                      <motion.input type="text" value={formData.serialNumber} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="Enter serial number" whileFocus={{ scale: 1.01, y: -1 }} className="bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border-none outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full" />
+                      <label className="font-['Inter:Medium',sans-serif] font-medium leading-[1.2] text-[#5c7089] text-[11px] tracking-[2.2px]">SERIAL NUMBER <span className="text-red-500">*</span></label>
+                      <motion.input type="text" value={formData.serialNumber} onChange={(e) => setField('serialNumber', e.target.value)} placeholder="Enter serial number" whileFocus={{ scale: 1.01, y: -1 }} className={`bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all w-full ${fieldErrors.serialNumber ? 'border-red-400' : 'border-transparent'}`} />
+                      {fieldErrors.serialNumber && <p className="text-[11px] text-red-500 font-['Inter:Regular',sans-serif]">{fieldErrors.serialNumber}</p>}
                     </motion.div>
                   </div>
                 </motion.div>

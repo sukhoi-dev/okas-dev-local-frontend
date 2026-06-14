@@ -209,7 +209,7 @@ export default function ProjectsPage() {
 
     setEditData({
       projectName:      raw.name            || '',
-      buildingId:       raw.building_id     || '',
+      buildingId:       raw.building_id || (raw.id != null ? String(raw.id) : ''),
       buildingType,
       address:          raw.address         || '',
       landmark:         raw.landmark        || raw.notes || '',
@@ -261,6 +261,7 @@ export default function ProjectsPage() {
                 categories={filterCategories}
                 onApply={(f) => setAppliedFilters(f)}
                 onClose={() => setShowFilter(false)}
+                initialFilters={appliedFilters}
               />
             )}
           </div>
@@ -300,22 +301,24 @@ export default function ProjectsPage() {
         <div className="flex flex-col items-start min-w-[900px] w-full">
           {/* Header row */}
           <div className="flex items-center px-[24px] h-[52px] w-full">
-            <div className="w-[260px] shrink-0">
+            <div className="flex-1 min-w-0 pr-[16px]">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">PROJECT INFORMATION</p>
             </div>
             <div className="w-[160px] shrink-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">SERIAL NUMBER</p>
             </div>
-            <div className="w-[170px] shrink-0">
+            <div className="w-[180px] shrink-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">ASSIGNED MEMBER</p>
             </div>
             <div className="w-[160px] shrink-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">INSTALLATION DATE</p>
             </div>
-            <div className="flex-1">
+            <div className="w-[120px] shrink-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">STATUS</p>
             </div>
-            <div className="w-[48px] shrink-0" />
+            <div className="w-[80px] shrink-0 flex justify-center">
+              <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">ACTION</p>
+            </div>
           </div>
           <div className="bg-[#e2e2e2] h-px w-full" />
 
@@ -357,7 +360,7 @@ export default function ProjectsPage() {
                       className="flex items-center px-[24px] h-[68px] bg-white w-full transition-colors"
                     >
                       {/* Project Information */}
-                      <div className="w-[260px] shrink-0 flex flex-col gap-[2px] pr-[16px]">
+                      <div className="flex-1 min-w-0 flex flex-col gap-[2px] pr-[16px]">
                         <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[#0a1e3f] text-[14px] truncate">{project.name}</p>
                         <p className="font-['Inter:Regular',sans-serif] text-[#5c7089] text-[12px] truncate">{project.address}</p>
                       </div>
@@ -366,7 +369,7 @@ export default function ProjectsPage() {
                         <p className="font-['Inter:Regular',sans-serif] text-[#1a7f64] text-[14px] truncate">{project.serialNo}</p>
                       </div>
                       {/* Assigned Member */}
-                      <div className="w-[170px] shrink-0 pr-[16px]">
+                      <div className="w-[180px] shrink-0 pr-[16px]">
                         <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[14px] truncate">
                           {memberNames[project.assignedMember] || project.assignedMember}
                         </p>
@@ -376,11 +379,11 @@ export default function ProjectsPage() {
                         <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[14px] truncate">{project.installationDate}</p>
                       </div>
                       {/* Status */}
-                      <div className="flex-1">
+                      <div className="w-[120px] shrink-0">
                         <StatusBadge status={project.status} />
                       </div>
                       {/* Kebab */}
-                      <div className="w-[48px] shrink-0 flex justify-end">
+                      <div className="w-[80px] shrink-0 flex justify-center">
                         <KebabMenu
                           onEdit={() => handleEdit(project.id)}
                           onDelete={() => handleDelete(project.id)}

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 
-export default function FilterDropdown({ categories, onApply, onClose }) {
+export default function FilterDropdown({ categories, onApply, onClose, initialFilters = {} }) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.name || '');
-  const [selectedFilters, setSelectedFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState(initialFilters);
   const [searchQuery, setSearchQuery] = useState('');
 
   const currentCategory = categories.find(cat => cat.name === activeCategory);
@@ -30,6 +30,7 @@ export default function FilterDropdown({ categories, onApply, onClose }) {
 
   const handleClear = () => {
     setSelectedFilters({});
+    onApply({});
   };
 
   return (

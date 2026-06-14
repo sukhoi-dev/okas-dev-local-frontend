@@ -5,14 +5,14 @@ import PortalProtectedRoute from './PortalProtectedRoute';
 import WEOKASRoutes from './WEOKASRoutes';
 import PlaceholderPage from '../features/we-okas/shared/PlaceholderPage';
 import DashboardHome from '../features/we-okas/shared/DashboardHome';
-
+import ProjectDetail from '../features/we-okas/system-integrators/projects/ProjectDetail';
 // Auth
 const LoginPage          = lazy(() => import('../features/auth/LoginPage'));
 const OtpPage            = lazy(() => import('../features/auth/OtpPage'));
 const ForgotPasswordPage = lazy(() => import('../features/auth/ForgotPasswordPage'));
 
 // PM portal
-const PMProjects = lazy(() => import('../features/we-okas/project-managers/ProjectManagersPage'));
+const PMProjects = lazy(() => import('../features/we-okas/system-integrators/projects/ProjectsPage'));
 const PMMembers  = lazy(() => import('../features/we-okas/project-managers/Members'));
 
 // Distributor portal
