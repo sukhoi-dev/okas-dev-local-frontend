@@ -15,7 +15,7 @@ import imgAvatar from '../../../assets/avatar.png';
 const NAV_ITEMS = [
   { name: 'Home',                 path: '/dashboard',                Icon: Home       },
   { name: 'System Integrators',   path: ROUTE_PATHS.WEOKAS_SIS,      Icon: Boxes,     permission: 'organizations.manage' },
-  { name: 'Projects',             path: ROUTE_PATHS.WEOKAS_PROJECTS,  Icon: FolderOpen },
+  { name: 'Projects',             path: '/projects',  Icon: FolderOpen },
   { name: 'Members',              path: '/members',                   Icon: Users      },
   { name: 'Roles &\nPermissions', path: '/roles-permissions',         Icon: UserCheck  },
   { name: 'Support',              path: '#',                          Icon: Headphones },
