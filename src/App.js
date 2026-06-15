@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -11,15 +12,24 @@ import useInactivityTimer from './features/auth/useInactivityTimer';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
+      staleTime: 0,
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     },
   },
 });
 
 export default function App() {
-  const { logout, isAuthenticated } = useAuthStore();
+  const { logout, isAuthenticated, refreshPermissions } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshPermissions();
+      queryClient.invalidateQueries();
+    } else {
+      queryClient.clear();
+    }
+  }, [isAuthenticated]);
 
   useInactivityTimer({
     timeoutMs: 30 * 60 * 1000,

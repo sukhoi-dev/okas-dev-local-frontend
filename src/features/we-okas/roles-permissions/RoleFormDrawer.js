@@ -4,12 +4,12 @@ import { X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useCreateRole, useUpdateRole } from './useRoles';
 
-// ── Permission module definitions ─────────────────────────────────────────────
-const MODULES = [
+// ── Default PM modules (used by PM portal + WE.OKAS admin) ───────────────────
+export const PM_MODULES = [
   {
     id: 'projects',
     label: 'Projects',
-    type: 'radio',   // mutually exclusive scope
+    type: 'radio',
     options: [
       { id: 'all_projects', label: 'All Projects' },
       { id: 'own_projects', label: 'Own Projects' },
@@ -36,37 +36,35 @@ const MODULES = [
   },
 ];
 
-// ── Initial form state ────────────────────────────────────────────────────────
-function initPermissions(role) {
-  if (!role?.permissions) {
-    return {
-      projects:      { scope: 'none' },
-      members:       { create: false, view: false, edit: false, delete: false },
-      design_studio: { access: false },
-    };
-  }
-  const p = role.permissions;
-  return {
-    projects:      { scope: p.projects?.scope ?? 'none' },
-    members:       { create: !!p.members?.create, view: !!p.members?.view, edit: !!p.members?.edit, delete: !!p.members?.delete },
-    design_studio: { access: !!p.design_studio?.access },
-  };
+// ── Build initial permission state from a role + module list ──────────────────
+function initPermissions(role, modules) {
+  const init = {};
+  modules.forEach((mod) => {
+    if (mod.type === 'radio') {
+      init[mod.id] = { scope: role?.permissions?.[mod.id]?.scope ?? 'none' };
+    } else {
+      const saved = role?.permissions?.[mod.id] ?? {};
+      const opts = {};
+      mod.options.forEach((opt) => { opts[opt.id] = !!saved[opt.id]; });
+      init[mod.id] = opts;
+    }
+  });
+  return init;
 }
 
-// ── Label style ───────────────────────────────────────────────────────────────
 const LABEL = 'text-[11px] font-semibold tracking-[2px] text-[#5c7089] uppercase mb-[8px] block';
-const INPUT = 'w-full bg-[#f4f7fb] rounded-[8px] px-[14px] py-[12px] text-[14px] text-[#0a1e3f] placeholder:text-[#9bb0c7] outline-none border border-transparent focus:border-[#0094AD] transition-colors';
+const INPUT  = 'w-full bg-[#f4f7fb] rounded-[8px] px-[14px] py-[12px] text-[14px] text-[#0a1e3f] placeholder:text-[#9bb0c7] outline-none border border-transparent focus:border-[#0094AD] transition-colors';
 
-// ── Module permission block ───────────────────────────────────────────────────
+// ── Per-module permission block ───────────────────────────────────────────────
 function ModuleBlock({ mod, permissions, onChange, onSelectAll }) {
-  const allSelected = mod.options.every((opt) => {
-    if (mod.type === 'radio') return permissions.projects?.scope === opt.id;
-    return permissions[mod.id]?.[opt.id] === true;
-  });
+  const allSelected = mod.options.every((opt) =>
+    mod.type === 'radio'
+      ? permissions[mod.id]?.scope === opt.id
+      : permissions[mod.id]?.[opt.id] === true,
+  );
 
   return (
     <div className="border-b border-[#f0f4f8] last:border-0 pb-[16px] mb-[16px] last:mb-0 last:pb-0">
-      {/* Module header */}
       <div className="flex items-center justify-between mb-[12px]">
         <span className="text-[14px] font-semibold text-[#0094AD]">{mod.label}</span>
         <button
@@ -78,12 +76,11 @@ function ModuleBlock({ mod, permissions, onChange, onSelectAll }) {
         </button>
       </div>
 
-      {/* Options */}
       <div className="flex flex-col gap-[10px]">
         {mod.options.map((opt) => {
           const checked =
             mod.type === 'radio'
-              ? permissions.projects?.scope === opt.id
+              ? permissions[mod.id]?.scope === opt.id
               : permissions[mod.id]?.[opt.id] === true;
 
           return (
@@ -110,34 +107,30 @@ function ModuleBlock({ mod, permissions, onChange, onSelectAll }) {
 }
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
-export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
+export default function RoleFormDrawer({ open, role, onClose, onSuccess, modules = PM_MODULES }) {
   const isEdit = !!role;
   const [name,        setName]        = useState('');
   const [description, setDescription] = useState('');
-  const [permissions, setPermissions] = useState(initPermissions(null));
+  const [permissions, setPermissions] = useState(() => initPermissions(null, modules));
   const [errors,      setErrors]      = useState({});
 
   const create = useCreateRole();
   const update = useUpdateRole();
   const isBusy = create.isPending || update.isPending;
 
-  // Prefill on open
   useEffect(() => {
     if (!open) return;
     setErrors({});
     setName(role?.name || '');
     setDescription(role?.description || '');
-    setPermissions(initPermissions(role));
-  }, [open, role]);
-
-  // ── Permission change handlers ──────────────────────────────────────────────
+    setPermissions(initPermissions(role, modules));
+  }, [open, role, modules]);
 
   const handleChange = (moduleId, type, optionId, checked) => {
     setPermissions((prev) => {
       const next = { ...prev };
-      if (moduleId === 'projects' && type === 'radio') {
-        // Radio: clicking already-selected deselects (→ 'none')
-        next.projects = { scope: checked ? optionId : 'none' };
+      if (type === 'radio') {
+        next[moduleId] = { scope: checked ? optionId : 'none' };
       } else {
         next[moduleId] = { ...next[moduleId], [optionId]: checked };
       }
@@ -148,28 +141,27 @@ export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
   const handleSelectAll = (moduleId) => {
     setPermissions((prev) => {
       const next = { ...prev };
-      const mod = MODULES.find((m) => m.id === moduleId);
-      if (moduleId === 'projects') {
-        // "Select all" for projects = all_projects scope
-        next.projects = { scope: prev.projects.scope === 'all_projects' ? 'none' : 'all_projects' };
+      const mod = modules.find((m) => m.id === moduleId);
+      if (mod.type === 'radio') {
+        const firstOpt = mod.options[0]?.id;
+        next[moduleId] = { scope: prev[moduleId]?.scope === firstOpt ? 'none' : firstOpt };
       } else {
         const allOn = mod.options.every((o) => prev[moduleId]?.[o.id]);
-        mod.options.forEach((o) => { next[moduleId] = { ...next[moduleId], [o.id]: !allOn }; });
+        const updated = {};
+        mod.options.forEach((o) => { updated[o.id] = !allOn; });
+        next[moduleId] = updated;
       }
       return next;
     });
   };
 
-  // ── Validate ──────────────────────────────────────────────────────────────────
-
   const validate = () => {
     const e = {};
     if (!name.trim()) e.name = 'Role name is required';
-    const p = permissions;
-    const hasAny =
-      p.projects.scope !== 'none' ||
-      Object.values(p.members).some(Boolean) ||
-      p.design_studio.access;
+    const hasAny = modules.some((mod) => {
+      if (mod.type === 'radio') return permissions[mod.id]?.scope !== 'none';
+      return mod.options.some((opt) => permissions[mod.id]?.[opt.id]);
+    });
     if (!hasAny) e.permissions = 'Select at least one permission';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -196,7 +188,6 @@ export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -206,7 +197,6 @@ export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
             className="fixed inset-0 bg-[rgba(10,30,63,0.2)] z-40"
           />
 
-          {/* Panel */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -214,7 +204,7 @@ export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
             transition={{ type: 'spring', damping: 30, stiffness: 280 }}
             className="fixed top-0 right-0 h-full w-[500px] bg-white shadow-[-8px_0_40px_rgba(10,30,63,0.10)] z-50 flex flex-col"
           >
-            {/* ── Header ── */}
+            {/* Header */}
             <div className="px-[32px] pt-[28px] pb-[20px] border-b border-[#f0f4f8]">
               <p className="text-[11px] font-semibold tracking-[2px] text-[#5c7089] uppercase mb-[6px]">
                 Role and Permission — {isEdit ? 'EDIT' : 'NEW'}
@@ -229,10 +219,8 @@ export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* ── Scrollable body ── */}
+            {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto">
-
-              {/* 01 Details */}
               <div className="px-[32px] pt-[24px] pb-[8px]">
                 <p className="text-[11px] font-semibold tracking-[2.5px] text-[#5c7089] uppercase mb-[16px]">
                   01  DETAILS
@@ -262,7 +250,6 @@ export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
                 </div>
               </div>
 
-              {/* 02 Module Permissions */}
               <div className="px-[32px] pt-[20px] pb-[32px]">
                 <p className="text-[11px] font-semibold tracking-[2.5px] text-[#5c7089] uppercase mb-[8px]">
                   02  MODULE PERMISSIONS
@@ -276,7 +263,7 @@ export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
                 )}
 
                 <div className="bg-white border border-[#e8edf3] rounded-[10px] p-[20px]">
-                  {MODULES.map((mod) => (
+                  {modules.map((mod) => (
                     <ModuleBlock
                       key={mod.id}
                       mod={mod}
@@ -289,7 +276,7 @@ export default function RoleFormDrawer({ open, role, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* ── Footer ── */}
+            {/* Footer */}
             <div className="px-[32px] py-[18px] bg-white border-t border-[#f0f4f8] flex items-center justify-end gap-[12px]">
               <button
                 type="button"

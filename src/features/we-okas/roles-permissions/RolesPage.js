@@ -3,24 +3,23 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Filter, Plus, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import FilterDropdown from './FilterDropdown';
-import RoleFormDrawer from './RoleFormDrawer';
+import RoleFormDrawer, { PM_MODULES } from './RoleFormDrawer';
 import { useRoles, useDeleteRole } from './useRoles';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function getModuleSummary(permissions) {
+// ── Module summary for a role card ────────────────────────────────────────────
+function getModuleSummary(permissions, modules) {
   if (!permissions) return '—';
-  const p = permissions;
-  const isAll =
-    p.projects?.scope === 'all_projects' &&
-    p.members?.create && p.members?.view && p.members?.edit && p.members?.delete &&
-    p.design_studio?.access;
-  if (isAll) return 'All Permissions';
-  const mods = [];
-  if (p.projects?.scope !== 'none') mods.push('Project');
-  if (p.members && Object.values(p.members).some(Boolean)) mods.push('Members');
-  if (p.design_studio?.access) mods.push('Design Studio');
-  return mods.length ? mods.join(', ') : 'No permissions';
+  const active = [];
+  modules.forEach((mod) => {
+    if (mod.type === 'radio') {
+      if (permissions[mod.id]?.scope !== 'none') active.push(mod.label);
+    } else {
+      if (mod.options.some((opt) => permissions[mod.id]?.[opt.id])) active.push(mod.label);
+    }
+  });
+  if (!active.length) return 'No permissions';
+  if (active.length === modules.length) return 'All Permissions';
+  return active.join(', ');
 }
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
@@ -41,7 +40,7 @@ function CardSkeleton() {
 }
 
 // ── Role card ─────────────────────────────────────────────────────────────────
-function RoleCard({ role, onEdit }) {
+function RoleCard({ role, onEdit, modules }) {
   const count = role.member_count ?? 0;
   return (
     <motion.div
@@ -60,7 +59,7 @@ function RoleCard({ role, onEdit }) {
         <div className="flex items-center gap-[6px] flex-wrap">
           <span className="text-[13px] text-[#5c7089]">Modules:</span>
           <span className="text-[13px] font-semibold text-[#0a1e3f]">
-            {getModuleSummary(role.permissions)}
+            {getModuleSummary(role.permissions, modules)}
           </span>
         </div>
       </div>
@@ -82,31 +81,10 @@ function RoleCard({ role, onEdit }) {
   );
 }
 
-// ── Filter state helpers ──────────────────────────────────────────────────────
 const EMPTY_SELECTION = { module: new Set(), status: new Set() };
 
-const FILTER_CATEGORIES = [
-  {
-    id: 'module',
-    label: 'Module',
-    options: [
-      { id: 'projects',      label: 'Projects'      },
-      { id: 'members',       label: 'Members'       },
-      { id: 'design_studio', label: 'Design Studio' },
-    ],
-  },
-  {
-    id: 'status',
-    label: 'Status',
-    options: [
-      { id: 'has_members',    label: 'Has members'   },
-      { id: 'empty',          label: 'No members'    },
-    ],
-  },
-];
-
 // ── Page ──────────────────────────────────────────────────────────────────────
-export default function RolesPage() {
+export default function RolesPage({ modules = PM_MODULES }) {
   const [search,       setSearch]       = useState('');
   const [drawerOpen,   setDrawerOpen]   = useState(false);
   const [editRole,     setEditRole]     = useState(null);
@@ -116,24 +94,39 @@ export default function RolesPage() {
 
   const { data: allRoles = [], isLoading } = useRoles();
 
-  // Client-side filtering
+  // Build filter categories from the active module list
+  const filterCategories = [
+    {
+      id: 'module',
+      label: 'Module',
+      options: modules.map((m) => ({ id: m.id, label: m.label })),
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      options: [
+        { id: 'has_members', label: 'Has members' },
+        { id: 'empty',       label: 'No members'  },
+      ],
+    },
+  ];
+
   const filtered = allRoles.filter((role) => {
-    // Text search
     if (search) {
       const q = search.toLowerCase();
       if (!role.name.toLowerCase().includes(q) && !(role.description || '').toLowerCase().includes(q)) return false;
     }
-    // Module filter
-    const modules = filterSel.module;
-    if (modules.size > 0) {
+    const mods = filterSel.module;
+    if (mods.size > 0) {
       const p = role.permissions || {};
-      const roleModules = new Set();
-      if (p.projects?.scope !== 'none') roleModules.add('projects');
-      if (p.members && Object.values(p.members).some(Boolean)) roleModules.add('members');
-      if (p.design_studio?.access) roleModules.add('design_studio');
-      if (![...modules].some((m) => roleModules.has(m))) return false;
+      const hasModule = [...mods].some((modId) => {
+        const mod = modules.find((m) => m.id === modId);
+        if (!mod) return false;
+        if (mod.type === 'radio') return p[modId]?.scope !== 'none';
+        return mod.options.some((opt) => p[modId]?.[opt.id]);
+      });
+      if (!hasModule) return false;
     }
-    // Status filter
     const statuses = filterSel.status;
     if (statuses.size > 0) {
       const count = role.member_count ?? 0;
@@ -154,20 +147,16 @@ export default function RolesPage() {
   };
 
   const handleEdit = (role) => { setEditRole(role);  setDrawerOpen(true); };
-  const handleAdd  = ()     => { setEditRole(null);   setDrawerOpen(true); };
+  const handleAdd  = ()     => { setEditRole(null);  setDrawerOpen(true); };
 
   return (
     <>
-    <div className="flex flex-col gap-[24px] px-[40px] pt-[32px] pb-[48px]">
-
-        {/* Title */}
+      <div className="flex flex-col gap-[24px] px-[40px] pt-[32px] pb-[48px]">
         <h1 className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[40px] tracking-[-0.8px] text-[#0a1e3f] leading-[1.1]">
           Roles and Permission
         </h1>
 
-        {/* Controls */}
         <div className="flex items-center gap-[12px]">
-          {/* Filters */}
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setFilterOpen(!filterOpen)}
@@ -184,7 +173,7 @@ export default function RolesPage() {
 
             {filterOpen && (
               <FilterDropdown
-                categories={FILTER_CATEGORIES}
+                categories={filterCategories}
                 selected={filterSel}
                 onChange={handleFilterChange}
                 onClear={() => setFilterSel(EMPTY_SELECTION)}
@@ -194,7 +183,6 @@ export default function RolesPage() {
             )}
           </div>
 
-          {/* Search */}
           <div className="bg-white h-[44px] rounded-[6px] px-[14px] border border-[#e2e2e2] flex items-center gap-[10px] w-[280px]">
             <Search size={16} className="text-[#5c7089] shrink-0" strokeWidth={1.8} />
             <input
@@ -208,7 +196,6 @@ export default function RolesPage() {
 
           <div className="flex-1" />
 
-          {/* Add New Role */}
           <button
             onClick={handleAdd}
             className="bg-[#0a1e3f] h-[44px] rounded-[6px] px-[20px] flex items-center gap-[8px] text-white font-semibold text-[14px] hover:bg-[#0a2a5a] transition-colors"
@@ -218,7 +205,6 @@ export default function RolesPage() {
           </button>
         </div>
 
-        {/* Cards */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[20px]">
             {[1, 2, 3, 4].map((n) => <CardSkeleton key={n} />)}
@@ -230,21 +216,20 @@ export default function RolesPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[20px]">
             {filtered.map((role) => (
-              <RoleCard key={role.id} role={role} onEdit={handleEdit} />
+              <RoleCard key={role.id} role={role} onEdit={handleEdit} modules={modules} />
             ))}
           </div>
         )}
       </div>
 
-      {/* Add / Edit drawer */}
       <RoleFormDrawer
         open={drawerOpen}
         role={editRole}
+        modules={modules}
         onClose={() => setDrawerOpen(false)}
         onSuccess={() => setDrawerOpen(false)}
       />
 
-      {/* Dismiss filter on outside click */}
       {filterOpen && (
         <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} />
       )}

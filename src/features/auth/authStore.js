@@ -25,6 +25,22 @@ const useAuthStore = create(
         set({ user: null, accessToken: null, permissions: [], permissionsGrouped: {}, isAuthenticated: false });
       },
 
+      refreshPermissions: async () => {
+        const token = localStorage.getItem(env.AUTH_TOKEN_KEY);
+        if (!token) return;
+        try {
+          const res = await fetch('/api/auth/permissions', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) return;
+          const data = await res.json().catch(() => ({}));
+          const perms = data.permissions ?? {};
+          set({ permissions: perms.flat ?? [], permissionsGrouped: perms.grouped ?? {} });
+        } catch {
+          // silently ignore — keep existing permissions
+        }
+      },
+
       /** Check if the user has a specific permission, e.g. "members.create" */
       hasPermission: (permKey) => {
         const state = useAuthStore.getState();

@@ -10,7 +10,7 @@ import { ROUTE_PATHS } from '../../config/constants';
 
 function getRoleRedirectPath(user) {
   if (user?.org_type === 'distributor') return '/distributor/dashboard';
-  if (user?.org_type === 'si')          return '/dashboard';
+  if (user?.org_type === 'si')          return '/si/dashboard';
   switch (user?.role) {
     case 'admin':            return ROUTE_PATHS.WEOKAS_DASHBOARD;
     case 'Viewer':           return '/user/dashboard';

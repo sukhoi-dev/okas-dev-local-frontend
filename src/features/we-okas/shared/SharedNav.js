@@ -24,11 +24,11 @@ const NAV_CONFIG = {
     { name: 'Support',              path: '/distributor/support',            icon: Headphones  },
   ],
   si: [
-    { name: 'Home',                 path: '/dashboard',          icon: Home        },
-    { name: 'Projects',             path: '/projects',           icon: Folder      },
-    { name: 'Members',              path: '/members',            icon: Users       },
-    { name: 'Roles &\nPermissions', path: '/roles-permissions',  icon: ShieldCheck },
-    { name: 'Support',              path: '/support',            icon: Headphones  },
+    { name: 'Home',                 path: '/si/dashboard', icon: Home        },
+    { name: 'Projects',             path: '/si/projects',  icon: Folder      },
+    { name: 'Members',              path: '/si/members',   icon: Users       },
+    { name: 'Roles &\nPermissions', path: '/si/roles',     icon: ShieldCheck },
+    { name: 'Support',              path: '/si/support',   icon: Headphones  },
   ],
   user: [
     { name: 'Home',     path: '/user/dashboard', icon: Home       },
