@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Filter, Plus, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
-import AppShell from '../_layout/AppShell';
 import FilterDropdown from './FilterDropdown';
 import RoleFormDrawer from './RoleFormDrawer';
 import { useRoles, useDeleteRole } from './useRoles';
@@ -158,7 +157,7 @@ export default function RolesPage() {
   const handleAdd  = ()     => { setEditRole(null);   setDrawerOpen(true); };
 
   return (
-    <AppShell>
+    <>
       <div className="flex flex-col gap-[24px] px-[40px] pt-[32px] pb-[48px]">
 
         {/* Title */}
@@ -249,6 +248,6 @@ export default function RolesPage() {
       {filterOpen && (
         <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} />
       )}
-    </AppShell>
+    </>
   );
 }

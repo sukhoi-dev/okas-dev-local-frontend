@@ -18,11 +18,16 @@ const SIDEBAR_WIDTH  = 240;
 const COLLAPSED_W    = 64;
 
 export default function Sidebar({ open, collapsed }) {
-  const role       = useAuthStore((s) => s.user?.role);
-  const { logout } = useAuth();
-  const navigate   = useNavigate();
+  const role        = useAuthStore((s) => s.user?.role);
+  const permissions = useAuthStore((s) => s.permissions); // flat backend keys e.g. "members.view"
+  const { logout }  = useAuth();
+  const navigate    = useNavigate();
 
-  const visibleNav = weOkasNav.filter((item) => !item.permission || roleHasPermission(role, item.permission));
+  const visibleNav = weOkasNav.filter((item) => {
+    if (!item.permission) return true;
+    // Check both: flat backend permissions (e.g. "members.view") AND role-based RBAC
+    return permissions.includes(item.permission) || roleHasPermission(role, item.permission);
+  });
   const width      = collapsed ? COLLAPSED_W : SIDEBAR_WIDTH;
 
   return (

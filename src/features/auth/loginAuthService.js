@@ -75,17 +75,27 @@ export async function loginWithPassword(email, password) {
     return { token: 'dev_mock_token', user: mockUser, permissionsData: { flat: [], grouped: {} } };
   }
 
-  const res = await fetch(`${BASE_URL}/members/auth/login/password`, {
+  // Hit the real we-okas backend: POST /we-okas/auth/login
+  const res = await fetch(`${BASE_URL}/we-okas/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.detail || data.message || 'Invalid email or password');
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.message || json.detail || 'Invalid email or password');
 
-  const token = data.access_token;
+  // Backend envelope: { body: { access_token, user: { ..., role: { name } } } }
+  const body     = json.body ?? json;
+  const token    = body.access_token;
+  const rawUser  = body.user ?? null;
+  const roleName = rawUser?.role?.name ?? rawUser?.role ?? null;
+  const user     = rawUser ? { ...rawUser, role: roleName } : null;
+
+  // Store for weOkasClient interceptor
+  if (token) localStorage.setItem('okas_jwt_token', token);
+
   const permissionsData = await fetchPermissions(token);
-  return { token, user: data.user ?? null, permissionsData };
+  return { token, user, permissionsData };
 }
 
 export async function loginWithGoogle(access_token, keepLoggedIn = false) {
