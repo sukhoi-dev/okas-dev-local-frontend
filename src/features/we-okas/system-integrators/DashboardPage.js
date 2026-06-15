@@ -4,7 +4,6 @@ import svgPaths from '../project-managers/assets/svg-dashboard-projects';
 import FilterDropdown from '../project-managers/FilterDropdown';
 import AddProjectDrawer from './projects/AddProjectDrawer';
 import { TopNav, LeftNav } from '../shared/SharedNav';
-import { DUMMY_PROJECTS } from '../project-managers/dummyData';
 
 function mapApiProject(p) {
   const addressParts = [p.address, p.landmark].filter(Boolean).join(', ');
@@ -100,10 +99,7 @@ export default function SIDashboardPage() {
   const [openKebabId, setOpenKebabId] = useState(null);
   const filterRef = useRef(null);
 
-  const fetchProjects = () => {
-    setApiProjects(DUMMY_PROJECTS);
-    setProjects(DUMMY_PROJECTS.map(mapApiProject));
-  };
+  const fetchProjects = () => {};
 
   const filterCategories = [
     { name: 'Owner',   options: [...new Set(projects.map(p => p.owner))].sort().map(n => ({ label: n, value: n })) },

@@ -3,18 +3,18 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import bgVideo from '../../assets/bgVideo.gif';
 import imgWeOkasLogo from '../../assets/weOkasLogo.png';
-import { verifyOtp, sendOtp, DEV_OTP_HINT } from './loginAuthService';
+import { verifyOtp, sendOtp } from './loginAuthService';
 import useAuthStore from './authStore';
 import { ROUTE_PATHS } from '../../config/constants';
 
 function getRoleRedirectPath(user) {
+  if (user?.org_type === 'distributor') return '/distributor/dashboard';
+  if (user?.org_type === 'si')          return '/dashboard';
   switch (user?.role) {
-    case 'admin':        return ROUTE_PATHS.WEOKAS_DASHBOARD;
-    case 'distributor':  return '/distributor/dashboard';
-    case 'si':           return '/si/dashboard';
-    case 'user':         return '/user/dashboard';
-    case 'pm':
-    default:             return '/dashboard';
+    case 'admin':            return ROUTE_PATHS.WEOKAS_DASHBOARD;
+    case 'Viewer':           return '/user/dashboard';
+    case 'Project Manager':
+    default:                 return '/dashboard';
   }
 }
 
@@ -67,8 +67,8 @@ export default function OtpPage() {
     setError('');
     setIsLoading(true);
     try {
-      const { token, user, permissionsData } = await verifyOtp(email, otpValue);
-      storeLogin(user, token, null, permissionsData?.flat ?? [], permissionsData?.grouped ?? {});
+      const { accessToken, user, permissionsData } = await verifyOtp(email, otpValue);
+      storeLogin(user, accessToken, permissionsData?.flat ?? [], permissionsData?.grouped ?? {});
       navigate(getRoleRedirectPath(user));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed');
@@ -119,9 +119,6 @@ export default function OtpPage() {
               <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[1.1] text-[#0a1e3f] text-[28px] md:text-[40px] tracking-[-0.8px]">Enter OTP</p>
               <p className="font-['Inter:Regular',sans-serif] font-normal leading-[1.5] text-[#5c7089] text-[14px] md:text-[16px]">
                 Enter your 6 digit OTP sent to <span className="text-[#0a1e3f] font-medium">{email}</span>
-              </p>
-              <p className="font-['Inter:Regular',sans-serif] text-[12px] text-[#0094AD] bg-[#e8f7fa] border border-[#b3e5ef] rounded-[4px] px-[10px] py-[6px] w-full">
-                Dev mode — enter <strong>{DEV_OTP_HINT}</strong> or any 6-digit code
               </p>
             </div>
 

@@ -5,6 +5,7 @@ import PortalProtectedRoute from './PortalProtectedRoute';
 import WEOKASRoutes from './WEOKASRoutes';
 import PlaceholderPage from '../features/we-okas/shared/PlaceholderPage';
 import DashboardHome from '../features/we-okas/shared/DashboardHome';
+import { TopNav, LeftNav } from '../features/we-okas/shared/SharedNav';
 
 // Auth
 const LoginPage          = lazy(() => import('../features/auth/LoginPage'));
@@ -13,12 +14,13 @@ const ForgotPasswordPage = lazy(() => import('../features/auth/ForgotPasswordPag
 
 // PM portal
 const PMProjects = lazy(() => import('../features/we-okas/project-managers/ProjectManagersPage'));
-const PMMembers  = lazy(() => import('../features/we-okas/project-managers/Members'));
+const UsersPage  = lazy(() => import('../features/we-okas/users/UsersPage'));
+const RolesPage  = lazy(() => import('../features/we-okas/roles-permissions/RolesPage'));
 
 // Distributor portal
 const DistributorProjects  = lazy(() => import('../features/we-okas/distributors/DistributorProjectsPage'));
 const DistributorMembers   = lazy(() => import('../features/we-okas/distributors/Members'));
-const DistributorSIListing = lazy(() => import('../features/we-okas/system-integrators/SystemIntegratorsListPage'));
+const DistributorSIListing = lazy(() => import('../features/we-okas/distributors/SystemIntegratorsListPage'));
 
 // SI portal
 const SIProjects = lazy(() => import('../features/we-okas/system-integrators/DashboardPage'));
@@ -51,9 +53,10 @@ export default function AppRouter() {
       {/* PM portal */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardHome />} />
-        <Route path="/projects"  element={<S><PMProjects /></S>} />
-        <Route path="/members"   element={<S><PMMembers /></S>} />
-        <Route path="/support"   element={<PlaceholderPage />} />
+        <Route path="/projects"           element={<S><PMProjects /></S>} />
+        <Route path="/members"            element={<S><div className="bg-white h-screen flex flex-col"><TopNav /><div className="flex flex-1 overflow-hidden"><LeftNav /><main className="bg-[#f4f7fb] flex-1 overflow-auto"><UsersPage /></main></div></div></S>} />
+        <Route path="/roles-permissions"  element={<S><div className="bg-white h-screen flex flex-col"><TopNav /><div className="flex flex-1 overflow-hidden"><LeftNav /><main className="bg-[#f4f7fb] flex-1 overflow-auto"><RolesPage /></main></div></div></S>} />
+        <Route path="/support"            element={<PlaceholderPage />} />
       </Route>
 
       {/* Distributor portal */}

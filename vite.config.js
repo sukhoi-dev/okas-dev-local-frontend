@@ -5,11 +5,9 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   server: {
     proxy: {
-      // Legacy / AWS API Gateway
       '/api': {
-        target: 'https://smt1vtu28a.execute-api.ap-south-1.amazonaws.com/dev',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },

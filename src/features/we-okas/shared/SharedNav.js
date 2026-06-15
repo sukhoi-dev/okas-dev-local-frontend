@@ -24,11 +24,11 @@ const NAV_CONFIG = {
     { name: 'Support',              path: '/distributor/support',            icon: Headphones  },
   ],
   si: [
-    { name: 'Home',                 path: '/si/dashboard', icon: Home        },
-    { name: 'Projects',             path: '/si/projects',  icon: Folder      },
-    { name: 'Members',              path: '/si/members',   icon: Users       },
-    { name: 'Roles &\nPermissions', path: '/si/roles',     icon: ShieldCheck },
-    { name: 'Support',              path: '/si/support',   icon: Headphones  },
+    { name: 'Home',                 path: '/dashboard',          icon: Home        },
+    { name: 'Projects',             path: '/projects',           icon: Folder      },
+    { name: 'Members',              path: '/members',            icon: Users       },
+    { name: 'Roles &\nPermissions', path: '/roles-permissions',  icon: ShieldCheck },
+    { name: 'Support',              path: '/support',            icon: Headphones  },
   ],
   user: [
     { name: 'Home',     path: '/user/dashboard', icon: Home       },
@@ -45,28 +45,6 @@ function getResultPath(role, type) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Dummy data ────────────────────────────────────────────────────────────────
-const DUMMY_NOTIFICATIONS = [
-  { id: 1, title: 'New project assigned',   message: 'You have been assigned to Project Alpha.',      time: '2 min ago',  read: false },
-  { id: 2, title: 'Member joined',          message: 'Rahul Sharma joined your team.',                time: '1 hour ago', read: false },
-  { id: 3, title: 'Project status updated', message: 'Project Beta moved to In Progress.',            time: '3 hours ago',read: true  },
-  { id: 4, title: 'System maintenance',     message: 'Scheduled maintenance tonight at 12:00 AM.',    time: '5 hours ago',read: true  },
-  { id: 5, title: 'Report ready',           message: 'Your monthly report is ready for download.',    time: '1 day ago',  read: true  },
-];
-
-const DUMMY_SEARCH_RESULTS = [
-  { type: 'Project', name: 'Project Alpha',   sub: 'Residential · Mumbai', email: ''                          },
-  { type: 'Project', name: 'Project Beta',    sub: 'Commercial · Delhi',   email: ''                          },
-  { type: 'Project', name: 'Project Gamma',   sub: 'Residential · Pune',   email: ''                          },
-  { type: 'Project', name: 'Project Delta',   sub: 'Commercial · Bangalore',email: ''                         },
-  { type: 'Member',  name: 'Arjun Sharma',    sub: 'Project Manager',      email: 'arjun.sharma@weokas.com'   },
-  { type: 'Member',  name: 'Priya Mehta',     sub: 'System Integrator',    email: 'priya.mehta@weokas.com'    },
-  { type: 'Member',  name: 'Rahul Sharma',    sub: 'Technician',           email: 'rahul.sharma@weokas.com'   },
-  { type: 'Member',  name: 'Sneha Patel',     sub: 'Master Programmer',    email: 'sneha.patel@weokas.com'    },
-  { type: 'Member',  name: 'Vikram Singh',    sub: 'Supporter',            email: 'vikram.singh@weokas.com'   },
-  { type: 'Member',  name: 'Anita Desai',     sub: 'Project Manager',      email: 'anita.desai@weokas.com'    },
-];
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function TopNav() {
   const navigate = useNavigate();
@@ -85,21 +63,18 @@ export function TopNav() {
 
   // Notifications
   const [notifOpen, setNotifOpen]     = useState(false);
-  const [notifications, setNotifications] = useState(DUMMY_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'New project assigned', message: 'You have been assigned to Solar Farm – Phase 2.', time: '2 min ago', read: false },
+    { id: 2, title: 'Member added', message: 'Ravi Kumar joined your organisation as a Technician.', time: '1 hr ago', read: false },
+    { id: 3, title: 'Project status updated', message: 'Rooftop Install – Block C moved to In Progress.', time: '3 hrs ago', read: false },
+    { id: 4, title: 'Support ticket resolved', message: 'Ticket #1042 has been marked as resolved.', time: 'Yesterday', read: true },
+    { id: 5, title: 'Role changed', message: 'Priya Mehta\'s role was updated to Project Manager.', time: '2 days ago', read: true },
+  ]);
   const notifRef                       = useRef(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const filteredResults = searchQuery.trim()
-    ? DUMMY_SEARCH_RESULTS.filter(r => {
-        const q = searchQuery.toLowerCase();
-        return (
-          r.name.toLowerCase().includes(q)  ||
-          r.sub.toLowerCase().includes(q)   ||
-          r.email.toLowerCase().includes(q)
-        );
-      })
-    : DUMMY_SEARCH_RESULTS;
+  const filteredResults = [];
 
   useEffect(() => {
     const handleClickOutside = (e) => {

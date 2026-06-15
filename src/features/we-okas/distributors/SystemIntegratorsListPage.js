@@ -163,7 +163,7 @@ function DetailDrawer({ si, onClose, onEdit }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SystemIntegratorsListPage() {
   const { user, accessToken }               = useAuthStore();
-  const distributorId                        = user?.id;
+  const distributorId                        = user?.organization_id;
 
   const [sis, setSIs]                        = useState([]);
   const [isLoading, setIsLoading]            = useState(false);
