@@ -5,7 +5,6 @@ import svgPaths from './assets/svg-dashboard-projects';
 import FilterDropdown from './FilterDropdown';
 import AddProjectDrawer from '../system-integrators/projects/AddProjectDrawer';
 import { TopNav, LeftNav } from '../shared/SharedNav';
-import { DUMMY_PROJECTS } from './dummyData';
 
 function mapApiProject(p) {
   const addressParts = [p.address, p.landmark].filter(Boolean).join(', ');
@@ -123,8 +122,6 @@ export default function ProjectManagersPage() {
   const filterRef = useRef(null);
 
   const fetchProjects = () => {
-    setApiProjects(DUMMY_PROJECTS);
-    setProjects(DUMMY_PROJECTS.map(mapApiProject));
   };
 
   const filterCategories = [

@@ -1,27 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
 import svgPaths from '../project-managers/assets/svg-members';
 import { TopNav, LeftNav } from '../shared/SharedNav';
 import AddMemberDrawer from '../project-managers/AddMemberDrawer';
 import EditMemberDrawer from '../project-managers/EditMemberDrawer';
 import FilterDropdown from '../project-managers/FilterDropdown';
-import { DUMMY_MEMBERS } from '../project-managers/dummyData';
+import memberService from '../users/memberService';
+import useAuthStore from '../../auth/authStore';
 
 function mapApiMember(m, index) {
   return {
     id: m.id != null ? String(m.id) : m.email ?? String(index),
     name: m.full_name,
-    role: m.role,
+    role: m.role?.name ?? m.role ?? '',
+    roleId: m.role?.id ?? null,
     email: m.email,
     status: m.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
-    mobile: m.mobile ?? '',
+    mobile: m.phone ?? m.mobile ?? '',
     dateOfBirth: m.date_of_birth ?? '',
     bloodGroup: m.blood_group ?? '',
     profilePhoto: m.profile_photo ?? null,
   };
 }
 
-function KebabMenu({ memberId, onEdit, onDelete }) {
+function KebabMenu({ memberId, onEdit, onDelete, canEdit, canDelete }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -42,7 +45,7 @@ function KebabMenu({ memberId, onEdit, onDelete }) {
       </motion.button>
 
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && (canEdit || canDelete) && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
             <motion.div
@@ -52,9 +55,9 @@ function KebabMenu({ memberId, onEdit, onDelete }) {
               transition={{ duration: 0.15 }}
               className="absolute right-0 top-full mt-1 w-[140px] bg-white rounded-[8px] shadow-[0px_8px_32px_0px_rgba(10,30,63,0.12)] border border-[#e2e2e2] overflow-hidden z-20"
             >
-              <motion.button onClick={() => { onEdit(memberId); setIsOpen(false); }} whileHover={{ x: 4, backgroundColor: '#f4f7fb' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#0a1e3f] transition-colors font-['Inter:Medium',sans-serif] font-medium">Edit</motion.button>
-              <div className="h-px w-full bg-[#e2e2e2]" />
-              <motion.button onClick={() => { onDelete(memberId); setIsOpen(false); }} whileHover={{ x: 4, backgroundColor: '#fef2f2' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#dc2626] transition-colors font-['Inter:Medium',sans-serif] font-medium">Delete</motion.button>
+              {canEdit && <motion.button onClick={() => { onEdit(memberId); setIsOpen(false); }} whileHover={{ x: 4, backgroundColor: '#f4f7fb' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#0a1e3f] transition-colors font-['Inter:Medium',sans-serif] font-medium">Edit</motion.button>}
+              {canEdit && canDelete && <div className="h-px w-full bg-[#e2e2e2]" />}
+              {canDelete && <motion.button onClick={() => { onDelete(memberId); setIsOpen(false); }} whileHover={{ x: 4, backgroundColor: '#fef2f2' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#dc2626] transition-colors font-['Inter:Medium',sans-serif] font-medium">Delete</motion.button>}
             </motion.div>
           </>
         )}
@@ -64,9 +67,17 @@ function KebabMenu({ memberId, onEdit, onDelete }) {
 }
 
 export default function SIMembers() {
-  const [members, setMembers] = useState([]);
-  const [isLoading] = useState(false);
-  const [fetchError] = useState(null);
+  const permissions = useAuthStore((s) => s.permissions);
+  const canCreate = permissions.includes('members.create');
+  const canEdit   = permissions.includes('members.edit');
+  const canDelete = permissions.includes('members.delete');
+
+  const { data: rawMembers = [], isLoading, error: fetchError, refetch } = useQuery({
+    queryKey: ['si-members'],
+    queryFn: () => memberService.list(),
+  });
+  const members = rawMembers.map(mapApiMember);
+
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -87,10 +98,6 @@ export default function SIMembers() {
     },
   ];
 
-  const fetchMembers = () => { setMembers(DUMMY_MEMBERS.map(mapApiMember)); };
-
-  useEffect(() => { fetchMembers(); }, []);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterRef.current && !filterRef.current.contains(event.target)) setShowFilterDropdown(false);
@@ -105,7 +112,8 @@ export default function SIMembers() {
       setEditingMember({
         id: member.id, fullName: member.name, email: member.email,
         phoneNumber: member.mobile, dateOfBirth: member.dateOfBirth,
-        bloodGroup: member.bloodGroup, role: member.role, profilePhoto: member.profilePhoto,
+        bloodGroup: member.bloodGroup, role: member.role, roleId: member.roleId,
+        profilePhoto: member.profilePhoto,
       });
     }
   };
@@ -113,7 +121,6 @@ export default function SIMembers() {
   const handleDelete = (id) => {
     const member = members.find(m => m.id === id);
     if (!member || !confirm(`Are you sure you want to delete ${member.name}?`)) return;
-    setMembers(prev => prev.filter(m => m.id !== id));
   };
 
   const filteredMembers = members.filter(member => {
@@ -165,14 +172,16 @@ export default function SIMembers() {
               </div>
             </div>
 
-            <motion.button onClick={() => setIsAddMemberOpen(true)} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="bg-[#0a1e3f] flex gap-[8px] h-[44px] items-center justify-center px-[20px] rounded-[4px] w-[180px] hover:opacity-90 transition-opacity shadow-sm hover:shadow-lg">
-              <motion.div animate={{ rotate: [0, 90, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="relative shrink-0 size-[18px]">
-                <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
-                  <path d="M9 3.6V14.4M3.6 9H14.4" stroke="white" strokeLinecap="round" strokeWidth="1.44" />
-                </svg>
-              </motion.div>
-              <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-white tracking-[0.14px] whitespace-nowrap">Add New Member</p>
-            </motion.button>
+            {canCreate && (
+              <motion.button onClick={() => setIsAddMemberOpen(true)} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }} className="bg-[#0a1e3f] flex gap-[8px] h-[44px] items-center justify-center px-[20px] rounded-[4px] w-[180px] hover:opacity-90 transition-opacity shadow-sm hover:shadow-lg">
+                <motion.div animate={{ rotate: [0, 90, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="relative shrink-0 size-[18px]">
+                  <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
+                    <path d="M9 3.6V14.4M3.6 9H14.4" stroke="white" strokeLinecap="round" strokeWidth="1.44" />
+                  </svg>
+                </motion.div>
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-white tracking-[0.14px] whitespace-nowrap">Add New Member</p>
+              </motion.button>
+            )}
           </div>
 
           <div className="bg-white rounded-[4px] w-full border border-[#e2e2e2]">
@@ -212,7 +221,7 @@ export default function SIMembers() {
                           </div>
                         </div>
                         <div className="flex h-[64px] items-center justify-end w-[104px]">
-                          <KebabMenu memberId={member.id} onEdit={handleEdit} onDelete={handleDelete} />
+                          <KebabMenu memberId={member.id} onEdit={handleEdit} onDelete={handleDelete} canEdit={canEdit} canDelete={canDelete} />
                         </div>
                       </div>
                     </motion.div>
@@ -224,8 +233,8 @@ export default function SIMembers() {
         </div>
       </div>
 
-      <AddMemberDrawer isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} onSave={fetchMembers} />
-      <EditMemberDrawer isOpen={editingMember !== null} member={editingMember} onClose={() => setEditingMember(null)} onSave={fetchMembers} />
+      <AddMemberDrawer isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} onSave={refetch} />
+      <EditMemberDrawer isOpen={editingMember !== null} member={editingMember} onClose={() => setEditingMember(null)} onSave={refetch} />
     </div>
   );
 }

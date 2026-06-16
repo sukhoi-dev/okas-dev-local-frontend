@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Eye, Pencil, Archive } from 'lucide-react';
 import { TopNav, LeftNav } from '../shared/SharedNav';
 import FilterDropdown from '../project-managers/FilterDropdown';
-import { DUMMY_PROJECTS } from './projectsDummyData';
 
 // ── Status Badge ───────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
@@ -118,7 +117,7 @@ export default function DistributorProjectsPage() {
       const selectedProjects = appliedFilters['Project Information']  ?? [];
       const q = searchQuery.toLowerCase();
 
-      let data = [...DUMMY_PROJECTS];
+      let data = [];
 
       if (q) {
         data = data.filter((p) =>
@@ -153,8 +152,8 @@ export default function DistributorProjectsPage() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const allSINames      = [...new Set(DUMMY_PROJECTS.map((p) => p.assignedSI))];
-  const allProjectNames = [...new Set(DUMMY_PROJECTS.map((p) => p.name))];
+  const allSINames      = [...new Set(projects.map((p) => p.assignedSI))];
+  const allProjectNames = [...new Set(projects.map((p) => p.name))];
 
   const filterCategories = [
     { name: 'Assigned SI',         options: allSINames.map((n) => ({ label: n, value: n })) },

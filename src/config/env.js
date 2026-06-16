@@ -4,6 +4,7 @@ const env = {
   APP_ENV: import.meta.env.VITE_APP_ENV || 'development',
   APP_VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
   AUTH_TOKEN_KEY: 'okas_access_token',
+  SESSION_TOKEN_KEY: 'okas_session_token',
   REFRESH_TOKEN_KEY: 'okas_refresh_token',
   IS_DEV: import.meta.env.DEV,
   IS_PROD: import.meta.env.PROD,

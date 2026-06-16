@@ -7,8 +7,8 @@ const useAuthStore = create(
     (set) => ({
       user: null,
       accessToken: null,
-      permissions: [],           // flat:    ["members.view", "design_studio.access", ...]
-      permissionsGrouped: {},    // grouped: { members: ["view","create"], projects: ["view"] }
+      permissions: [],
+      permissionsGrouped: {},
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -16,16 +16,30 @@ const useAuthStore = create(
       setError: (error) => set({ error }),
       setUser: (user) => set({ user }),
 
-      login: (user, accessToken, refreshToken, permissions = [], permissionsGrouped = {}) => {
-        localStorage.setItem(env.AUTH_TOKEN_KEY, accessToken);
-        if (refreshToken) localStorage.setItem(env.REFRESH_TOKEN_KEY, refreshToken);
+      login: (user, accessToken, permissions = [], permissionsGrouped = {}) => {
+        if (accessToken) localStorage.setItem(env.AUTH_TOKEN_KEY, accessToken);
         set({ user, accessToken, permissions, permissionsGrouped, isAuthenticated: true, error: null });
       },
 
       logout: () => {
         localStorage.removeItem(env.AUTH_TOKEN_KEY);
-        localStorage.removeItem(env.REFRESH_TOKEN_KEY);
         set({ user: null, accessToken: null, permissions: [], permissionsGrouped: {}, isAuthenticated: false });
+      },
+
+      refreshPermissions: async () => {
+        const token = localStorage.getItem(env.AUTH_TOKEN_KEY);
+        if (!token) return;
+        try {
+          const res = await fetch('/api/auth/permissions', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) return;
+          const data = await res.json().catch(() => ({}));
+          const perms = data.permissions ?? {};
+          set({ permissions: perms.flat ?? [], permissionsGrouped: perms.grouped ?? {} });
+        } catch {
+          // silently ignore — keep existing permissions
+        }
       },
 
       /** Check if the user has a specific permission, e.g. "members.create" */

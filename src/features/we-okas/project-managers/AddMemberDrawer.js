@@ -1,15 +1,18 @@
 import { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import svgPaths from './assets/svg-drawer-member';
 import imgOuterRingDashed from '../../../assets/outerRingDashed.png';
+import memberService from '../users/memberService';
+import roleService from '../roles-permissions/roleService';
+import useAuthStore from '../../auth/authStore';
 
 const emptyForm = {
   fullName: '',
   email: '',
   phoneNumber: '',
-  countryCode: '+91',
   dateOfBirth: '',
   bloodGroup: '',
-  role: 'Programmer',
+  roleId: '',
 };
 
 function toISODate(ddmmyyyy) {
@@ -19,11 +22,21 @@ function toISODate(ddmmyyyy) {
 }
 
 export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
+  const user = useAuthStore((s) => s.user);
+  const orgId = user?.organization_id;
+
   const [formData, setFormData] = useState(emptyForm);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [profilePhotoFile, setProfilePhotoFile] = useState(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
   const fileInputRef = useRef(null);
+
+  const { data: roles = [], isLoading: rolesLoading } = useQuery({
+    queryKey: ['roles'],
+    queryFn: () => roleService.list(),
+    enabled: isOpen,
+  });
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -46,13 +59,36 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
     setProfilePhotoFile(null);
     setProfilePhotoPreview(null);
     setError(null);
+    setSaving(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmit = () => {
-    onSave(formData);
-    reset();
-    onClose();
+  const handleSubmit = async () => {
+    if (!formData.fullName.trim()) { setError('Full name is required.'); return; }
+    if (!formData.email.trim())    { setError('Email is required.');     return; }
+    if (!formData.roleId)          { setError('Please select a role.');  return; }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await memberService.create({
+        full_name:       formData.fullName.trim(),
+        email:           formData.email.trim(),
+        phone:           formData.phoneNumber.trim() || null,
+        role_id:         Number(formData.roleId),
+        organization_id: orgId,
+        status:          'active',
+      });
+      onSave();
+      reset();
+      onClose();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.response?.data?.detail || 'Failed to save member.';
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -67,7 +103,7 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
             <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">TEAM — NEW</p>
             <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[#0a1e3f] text-[22px] tracking-[-0.44px]">Add Member</p>
           </div>
-          <button onClick={onClose} className="bg-[#f4f7fb] flex items-center justify-center rounded-[4px] size-[40px] hover:bg-[#e2e2e2] transition-colors">
+          <button onClick={() => { reset(); onClose(); }} className="bg-[#f4f7fb] flex items-center justify-center rounded-[4px] size-[40px] hover:bg-[#e2e2e2] transition-colors">
             <div className="relative size-[18px]">
               <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
                 <path d={svgPaths.p1f219680} stroke="#0A1E3F" strokeLinecap="round" strokeWidth="1.26" />
@@ -124,16 +160,19 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
                   <p className="font-['Inter:Regular',sans-serif] text-[#5c7089] text-[11px] tracking-[1.1px]">JPG or PNG · Max 2MB</p>
                 </div>
 
+                {/* Full Name */}
                 <div className="flex flex-col gap-[8px] w-full">
                   <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">*FULL NAME</p>
                   <input type="text" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} placeholder="Enter Full Name" className="bg-[#f4f7fb] h-[48px] w-full rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] outline-none focus:ring-2 focus:ring-[#0a1e3f]/10" />
                 </div>
 
+                {/* Email */}
                 <div className="flex flex-col gap-[8px] w-full">
                   <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">*EMAIL ADDRESS</p>
                   <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="eg. abc@xyz.com" className="bg-[#f4f7fb] h-[48px] w-full rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] outline-none focus:ring-2 focus:ring-[#0a1e3f]/10" />
                 </div>
 
+                {/* Phone */}
                 <div className="flex flex-col gap-[8px] w-full">
                   <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">PHONE NUMBER</p>
                   <div className="flex gap-[8px] h-[48px]">
@@ -147,6 +186,7 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
                   </div>
                 </div>
 
+                {/* Date of Birth */}
                 <div className="flex flex-col gap-[8px] w-full">
                   <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">DATE OF BIRTH</p>
                   <div className="relative w-full">
@@ -161,6 +201,7 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
                   </div>
                 </div>
 
+                {/* Blood Group */}
                 <div className="flex flex-col gap-[8px] w-full">
                   <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">BLOOD GROUP</p>
                   <div className="relative w-full">
@@ -183,15 +224,20 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
                   </div>
                 </div>
 
+                {/* Role — fetched dynamically */}
                 <div className="flex flex-col gap-[8px] w-full">
-                  <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">ROLE</p>
+                  <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">*ROLE</p>
                   <div className="relative w-full">
-                    <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="bg-[#f4f7fb] h-[48px] w-full rounded-[4px] px-[16px] pr-[48px] font-['Inter:Regular',sans-serif] text-[15px] text-[#0a1e3f] outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 appearance-none cursor-pointer">
-                      <option value="Programmer">Programmer</option>
-                      <option value="Master Programmer">Master Programmer</option>
-                      <option value="Project Manager">Project Manager</option>
-                      <option value="Technician">Technician</option>
-                      <option value="Supporter">Supporter</option>
+                    <select
+                      value={formData.roleId}
+                      onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
+                      disabled={rolesLoading}
+                      className="bg-[#f4f7fb] h-[48px] w-full rounded-[4px] px-[16px] pr-[48px] font-['Inter:Regular',sans-serif] text-[15px] text-[#0a1e3f] outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 appearance-none cursor-pointer disabled:opacity-60"
+                    >
+                      <option value="">{rolesLoading ? 'Loading roles…' : 'Select a role'}</option>
+                      {roles.map((r) => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
                     </select>
                     <div className="absolute right-[16px] top-1/2 -translate-y-1/2 size-[18px] pointer-events-none">
                       <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
@@ -200,6 +246,7 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
                     </div>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -211,11 +258,18 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
           <div className="bg-white w-full">
             {error && <p className="text-[12px] font-['Inter:Regular',sans-serif] text-red-500 text-center pt-[12px] px-[28px]">{error}</p>}
             <div className="flex items-center justify-end px-[28px] py-[16px] gap-[8px]">
-              <button onClick={() => { reset(); onClose(); }} className="flex h-[48px] items-center justify-center px-[24px] rounded-[4px] hover:bg-[#f4f7fb] transition-colors">
+              <button onClick={() => { reset(); onClose(); }} disabled={saving} className="flex h-[48px] items-center justify-center px-[24px] rounded-[4px] hover:bg-[#f4f7fb] transition-colors disabled:opacity-50">
                 <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[15px]">Cancel</p>
               </button>
-              <button onClick={handleSubmit} className="bg-[#0a1e3f] flex h-[48px] items-center justify-center px-[32px] rounded-[4px] w-[140px] hover:opacity-90 transition-opacity">
-                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-white tracking-[0.15px]">Save Member</p>
+              <button onClick={handleSubmit} disabled={saving} className="bg-[#0a1e3f] flex h-[48px] items-center justify-center px-[32px] rounded-[4px] w-[160px] hover:opacity-90 transition-opacity disabled:opacity-60">
+                {saving ? (
+                  <svg className="animate-spin size-[20px] text-white" fill="none" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25" />
+                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-white tracking-[0.15px]">Save Member</p>
+                )}
               </button>
             </div>
           </div>

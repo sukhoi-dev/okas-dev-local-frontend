@@ -6,39 +6,35 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import theme from './theme/theme';
 import AppRouter from './routes/index';
-import { validateSession, logoutUser } from './features/auth/loginAuthService';
 import useAuthStore from './features/auth/authStore';
 import useInactivityTimer from './features/auth/useInactivityTimer';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
+      staleTime: 0,
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     },
   },
 });
 
 export default function App() {
-  const { setUser, setLoading, logout, keepLoggedIn, isAuthenticated } = useAuthStore();
+  const { logout, isAuthenticated, refreshPermissions } = useAuthStore();
 
   useEffect(() => {
-    const check = async () => {
-      setLoading(true);
-      const user = await validateSession();
-      if (user) setUser(user);
-      else logout();
-      setLoading(false);
-    };
-    check();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (isAuthenticated) {
+      refreshPermissions();
+      queryClient.invalidateQueries();
+    } else {
+      queryClient.clear();
+    }
+  }, [isAuthenticated]);
 
   useInactivityTimer({
     timeoutMs: 30 * 60 * 1000,
-    enabled: isAuthenticated && !keepLoggedIn,
-    onTimeout: async () => {
-      await logoutUser();
+    enabled: isAuthenticated,
+    onTimeout: () => {
       logout();
       window.location.href = '/auth/login';
     },
