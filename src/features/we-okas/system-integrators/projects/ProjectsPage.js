@@ -129,19 +129,15 @@ export default function ProjectsPage() {
   const [memberNames, setMemberNames] = useState({});
 
   useEffect(() => {
-    const ids = [...new Set(rawProjects.map(p => p.project_manager_id ?? p.assigned_member).filter(id => id != null && id !== ''))];
-    if (ids.length === 0) return;
-    ids.forEach(id => {
-      if (memberNames[id]) return;
-      projectService.getMember(id)
-        .then(data => {
-          const name = data?.body?.full_name || data?.body?.name || data?.full_name || data?.name || id;
-          setMemberNames(prev => ({ ...prev, [id]: name }));
-        })
-        .catch(() => {});
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawProjects.length]);
+    projectService.getMembers()
+      .then(data => {
+        const list = data?.body?.members ?? data?.body?.data ?? data?.members ?? data?.data ?? (Array.isArray(data?.body) ? data.body : Array.isArray(data) ? data : []);
+        const map = {};
+        list.forEach(m => { map[m.id] = m.full_name || m.name || String(m.id); });
+        setMemberNames(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const [search, setSearch] = useState('');
   const [showFilter, setShowFilter] = useState(false);
@@ -357,7 +353,7 @@ export default function ProjectsPage() {
                   >
                     <motion.div
                       whileHover={{ backgroundColor: '#f8fafc' }}
-                      className="flex items-center px-[24px] h-[68px] bg-white w-full transition-colors"
+                      className="flex items-center px-[24px] h-[68px] bg-white w-full transition-colors border-b border-[#e2e2e2]"
                     >
                       {/* Project Information */}
                       <div className="flex-1 min-w-0 flex flex-col gap-[2px] pr-[16px]">
@@ -391,7 +387,6 @@ export default function ProjectsPage() {
                         />
                       </div>
                     </motion.div>
-                    {index < filtered.length - 1 && <div className="bg-[#e2e2e2] h-px w-full" />}
                   </motion.div>
                 ))
               )}

@@ -1,7 +1,12 @@
 import apiClient from '../../../../api/client';
+import useAuthStore from '../../../auth/authStore';
 
 const projectService = {
-  getProjects: () => apiClient.get('/we-okas/projects').then((r) => r.data),
+  getProjects: () => {
+    const user = useAuthStore.getState().user;
+    const params = user?.organization_id ? { organisation_id: user.organization_id } : {};
+    return apiClient.get('/we-okas/projects', { params }).then((r) => r.data);
+  },
   createProject: (payload) => apiClient.post('/we-okas/projects', payload).then((r) => r.data),
   updateProject: (id, payload) => apiClient.patch(`/we-okas/projects/${id}`, payload).then((r) => r.data),
   getMembers: () => apiClient.get('/we-okas/members').then((r) => r.data),

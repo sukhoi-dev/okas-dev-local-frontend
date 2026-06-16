@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import svgPaths from '../../project-managers/assets/svg-add-project';
 import projectService from './projectService';
 import { useCreateProject, useUpdateProject } from './useProjects';
+import useAuthStore from '../../../auth/authStore';
 
 const emptyForm = {
   projectName: '',
@@ -73,6 +74,7 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
       return;
     }
     setFieldErrors({});
+    const user = useAuthStore.getState().user;
     const payload = {
       name: formData.projectName,
       project_type: formData.buildingType.toLowerCase(),
@@ -80,6 +82,7 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
       notes: formData.landmark,
       project_manager_id: formData.assignedMember,
       serial_number: formData.serialNumber,
+      organization_id: user?.organization_id,
       homeowner: {
         full_name: formData.contactName,
         phone: `${formData.phoneCountryCode}${formData.phoneNumber}`,
