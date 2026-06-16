@@ -5,7 +5,6 @@ import { TopNav, LeftNav } from '../shared/SharedNav';
 import AddMemberDrawer from './AddMemberDrawer';
 import EditMemberDrawer from './EditMemberDrawer';
 import FilterDropdown from './FilterDropdown';
-import { DUMMY_MEMBERS } from './dummyData';
 
 function mapApiMember(m, index) {
   return {
@@ -100,7 +99,6 @@ export default function Members() {
   ];
 
   const fetchMembers = () => {
-    setMembers(DUMMY_MEMBERS.map(mapApiMember));
   };
 
   useEffect(() => { fetchMembers(); }, []);

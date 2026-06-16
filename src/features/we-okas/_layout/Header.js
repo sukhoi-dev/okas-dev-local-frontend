@@ -12,16 +12,19 @@ import useAuthStore from '../../auth/authStore';
 import useAuth from '../../auth/useAuth';
 import { roleLabel } from '../../../shared/utils/format.utils';
 import { ROUTE_PATHS } from '../../../config/constants';
+import ProfileModal from './ProfileModal';
 
 export default function Header({ onToggleSidebar, sidebarWidth }) {
   const user            = useAuthStore((s) => s.user);
   const { logout }      = useAuth();
   const navigate        = useNavigate();
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl]       = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const initials = user?.name ? user.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() : '?';
 
   return (
+    <>
     <AppBar
       position="fixed"
       elevation={0}
@@ -73,7 +76,7 @@ export default function Header({ onToggleSidebar, sidebarWidth }) {
             <Typography fontSize={11} color="text.disabled">{user?.email}</Typography>
           </Box>
           <Divider />
-          <MenuItem onClick={() => { setAnchorEl(null); navigate(ROUTE_PATHS.WEOKAS_SETTINGS); }}>
+          <MenuItem onClick={() => { setAnchorEl(null); setProfileOpen(true); }}>
             <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
             Profile & Settings
           </MenuItem>
@@ -85,5 +88,8 @@ export default function Header({ onToggleSidebar, sidebarWidth }) {
         </Menu>
       </Toolbar>
     </AppBar>
+
+    <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+    </>
   );
 }

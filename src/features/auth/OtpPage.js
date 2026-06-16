@@ -8,13 +8,13 @@ import useAuthStore from './authStore';
 import { ROUTE_PATHS } from '../../config/constants';
 
 function getRoleRedirectPath(user) {
+  if (user?.org_type === 'distributor') return '/distributor/dashboard';
+  if (user?.org_type === 'si')          return '/si/dashboard';
   switch (user?.role) {
-    case 'admin':        return ROUTE_PATHS.WEOKAS_DASHBOARD;
-    case 'distributor':  return '/distributor/dashboard';
-    case 'si':           return '/si/dashboard';
-    case 'user':         return '/user/dashboard';
-    case 'pm':
-    default:             return '/dashboard';
+    case 'admin':            return ROUTE_PATHS.WEOKAS_DASHBOARD;
+    case 'Viewer':           return '/user/dashboard';
+    case 'Project Manager':
+    default:                 return '/dashboard';
   }
 }
 
@@ -67,8 +67,8 @@ export default function OtpPage() {
     setError('');
     setIsLoading(true);
     try {
-      const { token, user } = await verifyOtp(email, otpValue, keepLoggedIn);
-      storeLogin(user, token, null, keepLoggedIn);
+      const { accessToken, user, permissionsData } = await verifyOtp(email, otpValue);
+      storeLogin(user, accessToken, permissionsData?.flat ?? [], permissionsData?.grouped ?? {});
       navigate(getRoleRedirectPath(user));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed');

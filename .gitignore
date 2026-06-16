@@ -30,6 +30,3 @@ yarn-error.log*
 # IDE/editor metadata
 .vscode/
 .idea/
-
-.vite/
-.claude/

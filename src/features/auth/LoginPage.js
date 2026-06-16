@@ -4,19 +4,18 @@ import { motion } from 'motion/react';
 import svgPaths from '../we-okas/project-managers/assets/svg-auth';
 import bgVideo from '../../assets/bgVideo.gif';
 import imgWeOkasLogo from '../../assets/weOkasLogo.png';
-import { useGoogleLogin } from '@react-oauth/google';
-import { loginWithPassword, sendOtp, loginWithGoogle } from './loginAuthService';
+import { loginWithPassword, sendOtp } from './loginAuthService';
 import useAuthStore from './authStore';
 import { ROUTE_PATHS } from '../../config/constants';
 
 function getRoleRedirectPath(user) {
+  if (user?.org_type === 'distributor') return '/distributor/dashboard';
+  if (user?.org_type === 'si')          return '/si/dashboard';
   switch (user?.role) {
-    case 'admin':        return ROUTE_PATHS.WEOKAS_DASHBOARD;
-    case 'distributor':  return '/distributor/dashboard';
-    case 'si':           return '/si/dashboard';
-    case 'user':         return '/user/dashboard';
-    case 'pm':
-    default:             return '/dashboard';
+    case 'admin':            return ROUTE_PATHS.WEOKAS_DASHBOARD;
+    case 'Viewer':           return '/user/dashboard';
+    case 'Project Manager':
+    default:                 return '/dashboard';
   }
 }
 
@@ -33,12 +32,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    if (!email || !password || !agreedToTerms) return;
+    if (!email || !agreedToTerms) return;
     setError('');
     setIsLoading(true);
     try {
-      const { token, user } = await loginWithPassword(email, password);
-      storeLogin(user, token, null);
+      const { accessToken, user, permissionsData } = await loginWithPassword(email, password);
+      storeLogin(user, accessToken, permissionsData?.flat ?? [], permissionsData?.grouped ?? {});
       navigate(getRoleRedirectPath(user));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -63,32 +62,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setError('');
-      setIsLoading(true);
-      try {
-        const { token, user } = await loginWithGoogle(tokenResponse.access_token, keepLoggedIn);
-        storeLogin(user, token, null, keepLoggedIn);
-        navigate(getRoleRedirectPath(user));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Google sign-in failed');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    onError: () => setError('Google sign-in was cancelled or failed'),
-    scope: 'openid email profile',
-  });
-
-  const handleGoogleLogin = () => {
-    if (!agreedToTerms) {
-      setError('Please agree to the Terms of Service first');
-      return;
-    }
-    googleLogin();
   };
 
   return (
@@ -195,8 +168,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* OTP + Google Sign-In */}
-            <div className="flex flex-col gap-[12px] items-center relative shrink-0 w-full">
+            {/* OTP option */}
+            <div className="flex flex-col gap-[20px] items-center relative shrink-0 w-full">
               <div className="bg-[#e2e2e2] h-px relative shrink-0 w-full" />
               <motion.button
                 type="button"
@@ -210,23 +183,6 @@ export default function LoginPage() {
                 <motion.svg animate={{ x: [0, 3, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} className="shrink-0 size-[12px]" fill="none" viewBox="0 0 12 12">
                   <path d="M4.25 9.5L7.75 6L4.25 2.5" stroke="#0A1E3F" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.4" />
                 </motion.svg>
-              </motion.button>
-              <p className="font-['Inter:Regular',sans-serif] font-normal text-[#5c7089] text-[12px]">or</p>
-              <motion.button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-                whileHover={!isLoading ? { scale: 1.02 } : {}}
-                whileTap={!isLoading ? { scale: 0.98 } : {}}
-                className="flex gap-[10px] items-center justify-center w-full px-[16px] py-[11px] rounded-[8px] border border-[#e2e2e2] bg-white hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
-              >
-                <svg className="shrink-0 size-[18px]" viewBox="0 0 18 18" fill="none">
-                  <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-                  <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-                  <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-                  <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-                </svg>
-                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[1.4] text-[#0a1e3f] text-[14px] whitespace-nowrap">continue with Google</p>
               </motion.button>
             </div>
 
@@ -253,7 +209,7 @@ export default function LoginPage() {
               <motion.button
                 type="button"
                 onClick={handleLogin}
-                disabled={!agreedToTerms || !email || !password || isLoading}
+                disabled={!agreedToTerms || !email || isLoading}
                 whileHover={agreedToTerms && email && password && !isLoading ? { scale: 1.02, y: -2 } : {}}
                 whileTap={agreedToTerms && email && password && !isLoading ? { scale: 0.98 } : {}}
                 className="bg-[#0a1e3f] h-[60px] relative rounded-[4px] shrink-0 w-full disabled:opacity-50 hover:bg-[#0a2a5a] transition-all disabled:hover:bg-[#0a1e3f] shadow-sm hover:shadow-lg disabled:shadow-none"
@@ -265,7 +221,7 @@ export default function LoginPage() {
                     </p>
                     {!isLoading && (
                       <motion.svg
-                        animate={agreedToTerms && email && password ? { x: [0, 3, 0] } : {}}
+                        animate={agreedToTerms && email ? { x: [0, 3, 0] } : {}}
                         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                         className="shrink-0 size-[22px]" fill="none" viewBox="0 0 22 22"
                       >

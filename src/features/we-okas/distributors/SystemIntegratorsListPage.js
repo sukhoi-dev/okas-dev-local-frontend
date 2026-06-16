@@ -135,13 +135,13 @@ function DetailDrawer({ si, onClose, onEdit }) {
             </div>
 
             <div className="flex-1 overflow-y-auto px-[40px] py-[32px] flex flex-col gap-[28px]">
-              <DetailField label="Full Name"      value={si.name}         />
-              <DetailField label="Company Name"   value={si.company_name} />
-              <DetailField label="Address"        value={si.address}      />
-              <DetailField label="Email Address"  value={si.email}        />
-              <DetailField label="Contact"        value={si.contact}      />
-              <DetailField label="GST/VAT Number" value={si.gst}          />
-              <DetailField label="Status"         value={si.status}       />
+              <DetailField label="Full Name"      value={si.contact_name}   />
+              <DetailField label="Company Name"   value={si.name}           />
+              <DetailField label="Address"        value={si.address}        />
+              <DetailField label="Email Address"  value={si.email}          />
+              <DetailField label="Contact"        value={si.phone}          />
+              <DetailField label="GST/VAT Number" value={si.gst_vat_number} />
+              <DetailField label="Status"         value={si.status}         />
             </div>
 
             <div className="px-[40px] py-[24px] border-t border-[#e8ecf0] flex justify-end">
@@ -163,7 +163,7 @@ function DetailDrawer({ si, onClose, onEdit }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SystemIntegratorsListPage() {
   const { user, accessToken }               = useAuthStore();
-  const distributorId                        = user?.id;
+  const distributorId                        = user?.organization_id;
 
   const [sis, setSIs]                        = useState([]);
   const [isLoading, setIsLoading]            = useState(false);
@@ -213,8 +213,8 @@ export default function SystemIntegratorsListPage() {
 
   // ── Filter categories ───────────────────────────────────────────────────────
   const filterCategories = [
-    { name: 'Name',         options: [...new Set(sis.map(s => s.name))].map(n => ({ label: n, value: n })) },
-    { name: 'Company Name', options: [...new Set(sis.map(s => s.company_name))].map(n => ({ label: n, value: n })) },
+    { name: 'Name',         options: [...new Set(sis.map(s => s.contact_name))].map(n => ({ label: n, value: n })) },
+    { name: 'Company Name', options: [...new Set(sis.map(s => s.name))].map(n => ({ label: n, value: n })) },
     { name: 'Status',       options: [{ label: 'Active', value: 'Active' }, { label: 'Inactive', value: 'Inactive' }] },
   ];
 
@@ -223,14 +223,14 @@ export default function SystemIntegratorsListPage() {
   // Strip empty optional fields — FastAPI rejects empty strings for optional fields
   const buildPayload = (formData) => {
     const payload = {
+      contact_name: formData.contact_name.trim(),
       name:         formData.name.trim(),
-      company_name: formData.company_name.trim(),
       email:        formData.email.trim(),
       status:       formData.status,
     };
     payload.address = formData.address.trim();
-    if (formData.contact?.trim()) payload.contact = `+91 ${formData.contact.trim()}`;
-    if (formData.gst?.trim())     payload.gst     = formData.gst.trim();
+    if (formData.phone?.trim())          payload.phone          = `+91 ${formData.phone.trim()}`;
+    if (formData.gst_vat_number?.trim()) payload.gst_vat_number = formData.gst_vat_number.trim();
     return payload;
   };
 
@@ -429,13 +429,13 @@ export default function SystemIntegratorsListPage() {
                     >
                       <div className="w-[30%] min-w-0 pr-[16px]">
                         <p className="text-[14px] font-semibold text-[#0a1e3f] truncate"
-                          style={{ fontFamily: 'Inter, sans-serif' }}>{si.name}</p>
+                          style={{ fontFamily: 'Inter, sans-serif' }}>{si.contact_name}</p>
                         <p className="text-[12px] text-[#5c7089] truncate mt-[2px]"
                           style={{ fontFamily: 'Inter, sans-serif' }}>{si.email}</p>
                       </div>
                       <div className="w-[22%] min-w-0 pr-[16px]">
                         <p className="text-[14px] text-[#0a1e3f] truncate"
-                          style={{ fontFamily: 'Inter, sans-serif' }}>{si.company_name}</p>
+                          style={{ fontFamily: 'Inter, sans-serif' }}>{si.name}</p>
                       </div>
                       <div className="flex-1 min-w-0 pr-[16px]">
                         <p className="text-[14px] text-[#5c7089] truncate"

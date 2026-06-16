@@ -2,19 +2,19 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const emptyForm = {
-  name:         '',
-  company_name: '',
-  address:      '',
-  email:        '',
-  contact:      '',
-  gst:          '',
-  status:       'Active',
+  contact_name:   '',
+  name:           '',
+  address:        '',
+  email:          '',
+  phone:          '',
+  gst_vat_number: '',
+  status:         'Active',
 };
 
 const emptyErrors = {
-  name: false, company_name: false, address: false,
+  contact_name: false, name: false, address: false,
   email: false, emailFormat: false,
-  contactFormat: false, gstFormat: false,
+  phoneFormat: false, gstFormat: false,
 };
 
 export default function AddSIDrawer({ isOpen, onClose, onSave, mode = 'add', initialData = null }) {
@@ -27,15 +27,15 @@ export default function AddSIDrawer({ isOpen, onClose, onSave, mode = 'add', ini
 
   useEffect(() => {
     if (isEdit && initialData) {
-      const rawContact = (initialData.contact ?? '').replace(/^\+91\s*/, '').trim();
+      const rawContact = (initialData.phone ?? '').replace(/^\+91\s*/, '').trim();
       setFormData({
-        name:         initialData.name         ?? '',
-        company_name: initialData.company_name ?? '',
-        address:      initialData.address      ?? '',
-        email:        initialData.email        ?? '',
-        contact:      rawContact,
-        gst:          initialData.gst          ?? '',
-        status:       initialData.status       ?? 'Active',
+        contact_name:   initialData.contact_name   ?? '',
+        name:           initialData.name           ?? '',
+        address:        initialData.address        ?? '',
+        email:          initialData.email          ?? '',
+        phone:          rawContact,
+        gst_vat_number: initialData.gst_vat_number ?? '',
+        status:         initialData.status         ?? 'Active',
       });
     } else {
       setFormData(emptyForm);
@@ -59,8 +59,8 @@ export default function AddSIDrawer({ isOpen, onClose, onSave, mode = 'add', ini
     let formatMsg   = '';
 
     // Required fields
+    if (!formData.contact_name.trim()) { newErrors.contact_name = true; hasRequired = true; }
     if (!formData.name.trim())         { newErrors.name         = true; hasRequired = true; }
-    if (!formData.company_name.trim()) { newErrors.company_name = true; hasRequired = true; }
     if (!formData.email.trim())        { newErrors.email        = true; hasRequired = true; }
     if (!formData.address.trim())      { newErrors.address      = true; hasRequired = true; }
 
@@ -70,15 +70,15 @@ export default function AddSIDrawer({ isOpen, onClose, onSave, mode = 'add', ini
       if (!emailOk) { newErrors.emailFormat = true; formatMsg = 'Enter a valid email address (eg. name@company.com).'; }
     }
 
-    // Contact format (10 digits if entered)
-    if (formData.contact.trim() && !formatMsg) {
-      const digits = formData.contact.replace(/\s/g, '');
-      if (!/^\d{10}$/.test(digits)) { newErrors.contactFormat = true; formatMsg = 'Contact must be 10 digits (eg. 98000 00001).'; }
+    // Phone format (10 digits if entered)
+    if (formData.phone.trim() && !formatMsg) {
+      const digits = formData.phone.replace(/\s/g, '');
+      if (!/^\d{10}$/.test(digits)) { newErrors.phoneFormat = true; formatMsg = 'Contact must be 10 digits (eg. 98000 00001).'; }
     }
 
     // GST format (if entered)
-    if (formData.gst.trim() && !formatMsg) {
-      const gstOk = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gst.trim());
+    if (formData.gst_vat_number.trim() && !formatMsg) {
+      const gstOk = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gst_vat_number.trim());
       if (!gstOk) { newErrors.gstFormat = true; formatMsg = 'Enter a valid GST number (eg. 29AABCS1429B1ZB).'; }
     }
 
@@ -163,30 +163,30 @@ export default function AddSIDrawer({ isOpen, onClose, onSave, mode = 'add', ini
 
                 {/* Full Name */}
                 <div className="flex flex-col gap-[6px]">
-                  <p className={`font-medium text-[11px] tracking-[2px] ${errors.name ? 'text-red-500' : 'text-[#5c7089]'}`}
+                  <p className={`font-medium text-[11px] tracking-[2px] ${errors.contact_name ? 'text-red-500' : 'text-[#5c7089]'}`}
                     style={{ fontFamily: 'Inter, sans-serif' }}>
                     *FULL NAME
                   </p>
                   <input
-                    type="text" value={formData.name}
-                    onChange={(e) => set('name', e.target.value)}
+                    type="text" value={formData.contact_name}
+                    onChange={(e) => set('contact_name', e.target.value)}
                     placeholder="Enter your full name"
-                    className={inputClass(errors.name)}
+                    className={inputClass(errors.contact_name)}
                     style={{ fontFamily: 'Inter, sans-serif' }}
                   />
                 </div>
 
                 {/* Company Name */}
                 <div className="flex flex-col gap-[6px]">
-                  <p className={`font-medium text-[11px] tracking-[2px] ${errors.company_name ? 'text-red-500' : 'text-[#5c7089]'}`}
+                  <p className={`font-medium text-[11px] tracking-[2px] ${errors.name ? 'text-red-500' : 'text-[#5c7089]'}`}
                     style={{ fontFamily: 'Inter, sans-serif' }}>
                     *COMPANY NAME
                   </p>
                   <input
-                    type="text" value={formData.company_name}
-                    onChange={(e) => set('company_name', e.target.value)}
+                    type="text" value={formData.name}
+                    onChange={(e) => set('name', e.target.value)}
                     placeholder="Enter your company name"
-                    className={inputClass(errors.company_name)}
+                    className={inputClass(errors.name)}
                     style={{ fontFamily: 'Inter, sans-serif' }}
                   />
                 </div>
@@ -224,7 +224,7 @@ export default function AddSIDrawer({ isOpen, onClose, onSave, mode = 'add', ini
 
                 {/* Contact */}
                 <div className="flex flex-col gap-[6px]">
-                  <p className={`font-medium text-[11px] tracking-[2px] ${errors.contactFormat ? 'text-red-500' : 'text-[#5c7089]'}`}
+                  <p className={`font-medium text-[11px] tracking-[2px] ${errors.phoneFormat ? 'text-red-500' : 'text-[#5c7089]'}`}
                     style={{ fontFamily: 'Inter, sans-serif' }}>
                     PHONE NUMBER
                   </p>
@@ -237,10 +237,10 @@ export default function AddSIDrawer({ isOpen, onClose, onSave, mode = 'add', ini
                       </svg>
                     </div>
                     <input
-                      type="tel" value={formData.contact}
-                      onChange={(e) => set('contact', e.target.value)}
+                      type="tel" value={formData.phone}
+                      onChange={(e) => set('phone', e.target.value)}
                       placeholder="00000 00000"
-                      className={`flex-1 ${inputClass(errors.contactFormat)}`}
+                      className={`flex-1 ${inputClass(errors.phoneFormat)}`}
                       style={{ fontFamily: 'Inter, sans-serif' }}
                     />
                   </div>
@@ -253,8 +253,8 @@ export default function AddSIDrawer({ isOpen, onClose, onSave, mode = 'add', ini
                     GST/VAT Number
                   </p>
                   <input
-                    type="text" value={formData.gst}
-                    onChange={(e) => set('gst', e.target.value.toUpperCase())}
+                    type="text" value={formData.gst_vat_number}
+                    onChange={(e) => set('gst_vat_number', e.target.value.toUpperCase())}
                     placeholder="Enter your GST/VAT number"
                     className={inputClass(errors.gstFormat)}
                     style={{ fontFamily: 'Inter, sans-serif' }}

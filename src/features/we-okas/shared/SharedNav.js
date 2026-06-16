@@ -5,6 +5,7 @@ import useAuthStore from '../../auth/authStore';
 import svgPaths from '../project-managers/assets/svg-members';
 import imgWeOkasLogo from '../../../assets/weOkasLogo.png';
 import imgAvatar from '../../../assets/avatar.png';
+import ProfileModal from '../_layout/ProfileModal';
 
 // ── Nav items per role ────────────────────────────────────────────────────────
 const NAV_CONFIG = {
@@ -44,28 +45,6 @@ function getResultPath(role, type) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Dummy data ────────────────────────────────────────────────────────────────
-const DUMMY_NOTIFICATIONS = [
-  { id: 1, title: 'New project assigned',   message: 'You have been assigned to Project Alpha.',      time: '2 min ago',  read: false },
-  { id: 2, title: 'Member joined',          message: 'Rahul Sharma joined your team.',                time: '1 hour ago', read: false },
-  { id: 3, title: 'Project status updated', message: 'Project Beta moved to In Progress.',            time: '3 hours ago',read: true  },
-  { id: 4, title: 'System maintenance',     message: 'Scheduled maintenance tonight at 12:00 AM.',    time: '5 hours ago',read: true  },
-  { id: 5, title: 'Report ready',           message: 'Your monthly report is ready for download.',    time: '1 day ago',  read: true  },
-];
-
-const DUMMY_SEARCH_RESULTS = [
-  { type: 'Project', name: 'Project Alpha',   sub: 'Residential · Mumbai', email: ''                          },
-  { type: 'Project', name: 'Project Beta',    sub: 'Commercial · Delhi',   email: ''                          },
-  { type: 'Project', name: 'Project Gamma',   sub: 'Residential · Pune',   email: ''                          },
-  { type: 'Project', name: 'Project Delta',   sub: 'Commercial · Bangalore',email: ''                         },
-  { type: 'Member',  name: 'Arjun Sharma',    sub: 'Project Manager',      email: 'arjun.sharma@weokas.com'   },
-  { type: 'Member',  name: 'Priya Mehta',     sub: 'System Integrator',    email: 'priya.mehta@weokas.com'    },
-  { type: 'Member',  name: 'Rahul Sharma',    sub: 'Technician',           email: 'rahul.sharma@weokas.com'   },
-  { type: 'Member',  name: 'Sneha Patel',     sub: 'Master Programmer',    email: 'sneha.patel@weokas.com'    },
-  { type: 'Member',  name: 'Vikram Singh',    sub: 'Supporter',            email: 'vikram.singh@weokas.com'   },
-  { type: 'Member',  name: 'Anita Desai',     sub: 'Project Manager',      email: 'anita.desai@weokas.com'    },
-];
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function TopNav() {
   const navigate = useNavigate();
@@ -73,8 +52,9 @@ export function TopNav() {
   const homePath = (NAV_CONFIG[user?.role] ?? NAV_CONFIG.pm)[0].path;
 
   // Avatar dropdown
-  const [avatarOpen, setAvatarOpen]   = useState(false);
-  const avatarRef                      = useRef(null);
+  const [avatarOpen, setAvatarOpen]     = useState(false);
+  const [profileOpen, setProfileOpen]   = useState(false);
+  const avatarRef                        = useRef(null);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,21 +63,18 @@ export function TopNav() {
 
   // Notifications
   const [notifOpen, setNotifOpen]     = useState(false);
-  const [notifications, setNotifications] = useState(DUMMY_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'New project assigned', message: 'You have been assigned to Solar Farm – Phase 2.', time: '2 min ago', read: false },
+    { id: 2, title: 'Member added', message: 'Ravi Kumar joined your organisation as a Technician.', time: '1 hr ago', read: false },
+    { id: 3, title: 'Project status updated', message: 'Rooftop Install – Block C moved to In Progress.', time: '3 hrs ago', read: false },
+    { id: 4, title: 'Support ticket resolved', message: 'Ticket #1042 has been marked as resolved.', time: 'Yesterday', read: true },
+    { id: 5, title: 'Role changed', message: 'Priya Mehta\'s role was updated to Project Manager.', time: '2 days ago', read: true },
+  ]);
   const notifRef                       = useRef(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const filteredResults = searchQuery.trim()
-    ? DUMMY_SEARCH_RESULTS.filter(r => {
-        const q = searchQuery.toLowerCase();
-        return (
-          r.name.toLowerCase().includes(q)  ||
-          r.sub.toLowerCase().includes(q)   ||
-          r.email.toLowerCase().includes(q)
-        );
-      })
-    : DUMMY_SEARCH_RESULTS;
+  const filteredResults = [];
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -295,7 +272,7 @@ export function TopNav() {
           {avatarOpen && (
             <div className="absolute right-0 top-[48px] bg-white rounded-[8px] p-[8px] shadow-[0px_8px_32px_0px_rgba(10,30,63,0.12)] border border-[#e2e2e2] min-w-[200px] z-50">
               <button
-                onClick={() => setAvatarOpen(false)}
+                onClick={() => { setAvatarOpen(false); setProfileOpen(true); }}
                 className="w-full px-[16px] py-[12px] text-[14px] text-[#0a1e3f] rounded-[4px] hover:bg-[#f4f7fb] font-['Inter:Regular',sans-serif] flex items-center gap-[12px] text-left"
               >
                 <Settings size={16} />
@@ -313,6 +290,8 @@ export function TopNav() {
         </div>
 
       </div>
+
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }

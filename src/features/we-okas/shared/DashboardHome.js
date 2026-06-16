@@ -52,7 +52,7 @@ const FALLBACK = ROLE_CONFIG.pm;
 
 export default function DashboardHome() {
   const user = useAuthStore((s) => s.user);
-  const config = ROLE_CONFIG[user?.role] ?? FALLBACK;
+  const config = ROLE_CONFIG[user?.org_type] ?? ROLE_CONFIG[user?.role] ?? FALLBACK;
 
   return (
     <div className="bg-white flex flex-col h-screen w-full overflow-hidden">

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import svgPaths from './assets/svg-add-project';
-import { DUMMY_MEMBERS } from './dummyData';
 
 const emptyForm = {
   buildingId: '',
@@ -25,7 +24,7 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
     if (isOpen) {
       setFormData(initialData ?? emptyForm);
       setError(null);
-      setMembers(DUMMY_MEMBERS.map(m => ({ id: m.id, name: m.full_name })));
+      setMembers([]);
     }
   }, [isOpen, initialData]);
 

@@ -3,12 +3,21 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/setupTests.js',
+  },
   server: {
-    host: true,
-    port: 3000,
     proxy: {
-      '/api': { target: 'http://localhost:8000', changeOrigin: true },
-      '/auth': { target: 'http://localhost:8000', changeOrigin: true },
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/auth': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
   plugins: [

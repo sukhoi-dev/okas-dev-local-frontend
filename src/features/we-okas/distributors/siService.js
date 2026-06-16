@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:8000/api';
+const BASE = '/api';
 
 async function request(url, token, options = {}) {
   const res = await fetch(url, {
@@ -9,6 +9,11 @@ async function request(url, token, options = {}) {
       ...options.headers,
     },
   });
+
+  if (res.status === 401) {
+    window.location.href = '/auth/login';
+    return Promise.reject(new Error('Unauthorized'));
+  }
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
