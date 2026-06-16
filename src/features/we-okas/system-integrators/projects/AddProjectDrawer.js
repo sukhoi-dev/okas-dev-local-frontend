@@ -251,7 +251,7 @@ export default function AddProjectDrawer({ isOpen, onClose, onSave, mode = 'crea
                             <path d="M4.5 7.2L9 10.8L13.5 7.2" stroke="#5C7089" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.26" />
                           </svg>
                         </div>
-                        <motion.input type="tel" value={formData.phoneNumber} onChange={(e) => setField('phoneNumber', e.target.value)} placeholder="00000 00000" whileFocus={{ scale: 1.01, y: -1 }} className={`flex-1 bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all ${fieldErrors.phoneNumber ? 'border-red-400' : 'border-transparent'}`} />
+                        <motion.input type="tel" inputMode="numeric" value={formData.phoneNumber} onChange={(e) => setField('phoneNumber', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="00000 00000" whileFocus={{ scale: 1.01, y: -1 }} className={`flex-1 bg-[#f4f7fb] h-[44px] md:h-[48px] rounded-[4px] px-[16px] font-['Inter:Regular',sans-serif] font-normal text-[14px] md:text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] border outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 transition-all ${fieldErrors.phoneNumber ? 'border-red-400' : 'border-transparent'}`} />
                       </div>
                       {fieldErrors.phoneNumber && <p className="text-[11px] text-red-500 font-['Inter:Regular',sans-serif]">{fieldErrors.phoneNumber}</p>}
                     </motion.div>
