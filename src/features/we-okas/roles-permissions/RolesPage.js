@@ -50,7 +50,7 @@ function RoleCard({ role, onEdit, modules }) {
       className="bg-white rounded-[12px] border border-[#e8edf3] flex flex-col transition-shadow hover:shadow-[0_4px_20px_rgba(10,30,63,0.08)]"
     >
       <div className="p-[24px] flex-1">
-        <h3 className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[18px] text-[#0a1e3f] mb-[8px] leading-tight">
+        <h3 className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[18px] text-[#0a1e3f] mb-[8px] leading-tight capitalize">
           {role.name}
         </h3>
         <p className="text-[14px] text-[#5c7089] leading-[1.6] mb-[16px] min-h-[44px]">

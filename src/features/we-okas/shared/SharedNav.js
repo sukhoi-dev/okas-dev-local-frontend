@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import env from '../../../config/env';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Settings, LogOut, Home, Box, Folder, Users, ShieldCheck, Headphones, HelpCircle } from 'lucide-react';
 import useAuthStore from '../../auth/authStore';
@@ -74,7 +75,58 @@ export function TopNav() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const filteredResults = [];
+  const [filteredResults, setFilteredResults] = useState([]);
+  const [searchLoading, setSearchLoading]     = useState(false);
+
+  const fetchResults = useCallback(async (query) => {
+    if (!query || query.trim().length < 2) { setFilteredResults([]); return; }
+    setSearchLoading(true);
+
+    const token = localStorage.getItem('okas_jwt_token') || localStorage.getItem(env.AUTH_TOKEN_KEY);
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const base = env.API_BASE_URL;
+
+    const safeFetch = async (url) => {
+      try {
+        const res = await fetch(url, { headers });
+        if (!res.ok) return null;
+        return res.json();
+      } catch { return null; }
+    };
+
+    try {
+      const [projectsData, membersData] = await Promise.all([
+        safeFetch(`${base}/we-okas/projects?search=${encodeURIComponent(query)}`),
+        safeFetch(`${base}/we-okas/members?search=${encodeURIComponent(query)}`),
+      ]);
+
+      const projects = projectsData?.body?.projects ?? projectsData?.projects ?? [];
+      const members  = membersData?.body ?? membersData?.data ?? (Array.isArray(membersData) ? membersData : []);
+
+      setFilteredResults([
+        ...projects.slice(0, 5).map(p => ({
+          type: 'Project',
+          name: p.name || '—',
+          sub:  p.address || '—',
+        })),
+        ...members.slice(0, 5).map(m => ({
+          type:  'Member',
+          name:  m.full_name || m.name || '—',
+          sub:   m.role_name || (typeof m.role === 'string' ? m.role : m.role?.name) || '—',
+          email: m.email || '',
+        })),
+      ]);
+    } catch {
+      setFilteredResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchResults(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, fetchResults]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -137,9 +189,15 @@ export function TopNav() {
                 {searchQuery ? 'Results' : 'Recent'}
               </p>
             </div>
-            {filteredResults.length === 0 ? (
+            {searchLoading ? (
+              <div className="px-[16px] py-[20px] flex justify-center">
+                <div className="size-[20px] rounded-full border-[2px] border-[#e2e2e2] border-t-[#0a1e3f] animate-spin" />
+              </div>
+            ) : filteredResults.length === 0 ? (
               <div className="px-[16px] py-[20px] text-center">
-                <p className="text-[14px] text-[#5c7089]" style={{ fontFamily: 'Inter, sans-serif' }}>No results found</p>
+                <p className="text-[14px] text-[#5c7089]" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  {searchQuery.length >= 2 ? 'No results found' : 'Type at least 2 characters to search'}
+                </p>
               </div>
             ) : (
               filteredResults.map((item, i) => (
