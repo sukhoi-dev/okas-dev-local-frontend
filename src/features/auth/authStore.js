@@ -15,13 +15,15 @@ const useAuthStore = create(
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
 
-      login: (user, accessToken, permissions = [], permissionsGrouped = {}) => {
+      login: (user, accessToken, permissions = [], permissionsGrouped = {}, sessionToken = null) => {
         if (accessToken) localStorage.setItem(env.AUTH_TOKEN_KEY, accessToken);
+        if (sessionToken) localStorage.setItem(env.SESSION_TOKEN_KEY, sessionToken);
         set({ user, accessToken, permissions, permissionsGrouped, isAuthenticated: true, error: null });
       },
 
       logout: () => {
         localStorage.removeItem(env.AUTH_TOKEN_KEY);
+        localStorage.removeItem(env.SESSION_TOKEN_KEY);
         set({ user: null, accessToken: null, permissions: [], permissionsGrouped: {}, isAuthenticated: false });
       },
 
