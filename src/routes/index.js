@@ -21,7 +21,7 @@ const UsersPage  = lazy(() => import('../features/we-okas/users/UsersPage'));
 const RolesPage  = lazy(() => import('../features/we-okas/roles-permissions/RolesPage'));
 
 // Distributor portal
-const DistributorProjects  = lazy(() => import('../features/we-okas/distributors/DistributorProjectsPage'));
+const DistributorProjects  = lazy(() => import('../features/we-okas/system-integrators/projects/ProjectsPage'));
 const DistributorMembers   = lazy(() => import('../features/we-okas/distributors/Members'));
 const DistributorSIListing = lazy(() => import('../features/we-okas/distributors/SystemIntegratorsListPage'));
 const DistributorRolesPage = lazy(() => import('../features/we-okas/distributors/RolesPage'));

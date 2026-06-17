@@ -227,7 +227,9 @@ export default function ProjectsPage() {
       <TopNav />
       <div className="flex flex-1 overflow-hidden">
         <LeftNav />
-    <div className="bg-[#f4f7fb] flex flex-col gap-[28px] items-start overflow-y-auto pb-[40px] pt-[32px] px-[40px] flex-1 h-full">
+    <div className="bg-[#f4f7fb] flex flex-col flex-1 h-full overflow-hidden">
+      {/* Sticky Header */}
+      <div className="flex flex-col gap-[28px] pt-[32px] px-[40px] pb-[28px] shrink-0 bg-[#f4f7fb]">
       {/* Page Title */}
       <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[1.1] text-[#0a1e3f] text-[40px] tracking-[-0.8px]">Projects</p>
 
@@ -285,18 +287,22 @@ export default function ProjectsPage() {
           whileTap={{ scale: 0.98 }}
           className="bg-[#0a1e3f] flex gap-[8px] h-[44px] items-center justify-center px-[20px] rounded-[4px] shrink-0 hover:bg-[#0a2a5a] transition-colors shadow-sm hover:shadow-lg"
         >
-          <svg className="shrink-0 size-[18px]" fill="none" viewBox="0 0 20 20">
+          <motion.svg animate={{ rotate: [0, 90, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="shrink-0 size-[20px]" fill="none" viewBox="0 0 20 20">
             <path d="M10 4V16M4 10H16" stroke="white" strokeLinecap="round" strokeWidth="1.6" />
-          </svg>
+          </motion.svg>
           <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-white tracking-[0.14px] whitespace-nowrap">Add New Project</p>
         </motion.button>
       </div>
+      </div>{/* end sticky header */}
+
+      {/* Scrollable content */}
+      <div className="flex flex-col flex-1 overflow-hidden px-[40px] pb-[40px] min-h-0">
 
       {/* Table */}
-      <div className="bg-white relative rounded-[4px] shrink-0 w-full border border-[#e2e2e2] overflow-x-auto" style={{ minHeight: '733px', maxHeight: '733px' }}>
+      <div className="bg-white relative rounded-[4px] w-full border border-[#e2e2e2] overflow-auto flex-1 min-h-0">
         <div className="flex flex-col items-start min-w-[900px] w-full">
           {/* Header row */}
-          <div className="flex items-center px-[24px] h-[52px] w-full">
+          <div className="flex items-center px-[24px] h-[52px] w-full sticky top-0 bg-white z-10">
             <div className="flex-1 min-w-0 pr-[16px]">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">PROJECT INFORMATION</p>
             </div>
@@ -316,7 +322,7 @@ export default function ProjectsPage() {
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">ACTION</p>
             </div>
           </div>
-          <div className="bg-[#e2e2e2] h-px w-full" />
+          <div className="bg-[#e2e2e2] h-px w-full sticky top-[52px] z-10" />
 
           {/* Loading */}
           {isLoading && (
@@ -411,6 +417,7 @@ export default function ProjectsPage() {
         initialData={editData}
         projectId={editId}
       />
+      </div>{/* end scrollable content */}
     </div>
       </div>
     </div>
