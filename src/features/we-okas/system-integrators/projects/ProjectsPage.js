@@ -17,7 +17,7 @@ function mapApiProject(p) {
     name: p.name || p.building_id || '—',
     address: addressParts || '—',
     serialNo: p.okas_box_info || p.serial_number || '—',
-    assignedMember: p.project_manager_id ?? p.assigned_member ?? '—',
+    assignedMember: p.assigned_member?.full_name || '—',
     installationDate,
     status: p.status || 'Active',
   };
@@ -126,19 +126,6 @@ export default function ProjectsPage() {
   const rawProjects = data?.body?.projects ?? data?.projects ?? (Array.isArray(data) ? data : []);
   const allProjects = rawProjects.map(mapApiProject);
 
-  const [memberNames, setMemberNames] = useState({});
-
-  useEffect(() => {
-    projectService.getMembers()
-      .then(data => {
-        const list = data?.body?.members ?? data?.body?.data ?? data?.members ?? data?.data ?? (Array.isArray(data?.body) ? data.body : Array.isArray(data) ? data : []);
-        const map = {};
-        list.forEach(m => { map[m.id] = m.full_name || m.name || String(m.id); });
-        setMemberNames(map);
-      })
-      .catch(() => {});
-  }, []);
-
   const [search, setSearch] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
@@ -163,9 +150,9 @@ export default function ProjectsPage() {
   const filterCategories = [
     {
       name: 'Assigned Member',
-      options: [...new Set(projects.map(p => p.assignedMember))].sort().map(id => ({
-        label: memberNames[id] || id,
-        value: id,
+      options: [...new Set(projects.map(p => p.assignedMember))].sort().map(name => ({
+        label: name,
+        value: name,
       })),
     },
     { name: 'Project Information', options: [...new Set(projects.map(p => p.name))].sort().map(n => ({ label: n, value: n })) },
@@ -173,13 +160,12 @@ export default function ProjectsPage() {
 
   const filtered = projects.filter(p => {
     const q = search.toLowerCase();
-    const memberDisplay = (memberNames[p.assignedMember] || String(p.assignedMember)).toLowerCase();
     const matchSearch =
       String(p.name).toLowerCase().includes(q) ||
       String(p.address).toLowerCase().includes(q) ||
       String(p.serialNo).toLowerCase().includes(q) ||
       String(p.status).toLowerCase().includes(q) ||
-      memberDisplay.includes(q);
+      String(p.assignedMember).toLowerCase().includes(q);
     const selMembers  = appliedFilters['Assigned Member']    ?? [];
     const selProjects = appliedFilters['Project Information'] ?? [];
     return (
@@ -209,7 +195,7 @@ export default function ProjectsPage() {
       buildingType,
       address:          raw.address         || '',
       landmark:         raw.landmark        || raw.notes || '',
-      assignedMember:   raw.project_manager_id ?? raw.assigned_member ?? '',
+      assignedMember:   raw.assigned_member?.id ?? raw.project_manager_id ?? '',
       contactName:      raw.owner?.full_name || raw.owner?.name || '',
       phoneCountryCode,
       phoneNumber,
@@ -373,7 +359,7 @@ export default function ProjectsPage() {
                       {/* Assigned Member */}
                       <div className="w-[180px] shrink-0 pr-[16px]">
                         <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[14px] truncate">
-                          {memberNames[project.assignedMember] || project.assignedMember}
+                          {project.assignedMember}
                         </p>
                       </div>
                       {/* Installation Date */}
