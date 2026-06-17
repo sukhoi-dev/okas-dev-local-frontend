@@ -285,9 +285,9 @@ export default function ProjectsPage() {
           whileTap={{ scale: 0.98 }}
           className="bg-[#0a1e3f] flex gap-[8px] h-[44px] items-center justify-center px-[20px] rounded-[4px] shrink-0 hover:bg-[#0a2a5a] transition-colors shadow-sm hover:shadow-lg"
         >
-          <svg className="shrink-0 size-[18px]" fill="none" viewBox="0 0 20 20">
+          <motion.svg animate={{ rotate: [0, 90, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="shrink-0 size-[20px]" fill="none" viewBox="0 0 20 20">
             <path d="M10 4V16M4 10H16" stroke="white" strokeLinecap="round" strokeWidth="1.6" />
-          </svg>
+          </motion.svg>
           <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-white tracking-[0.14px] whitespace-nowrap">Add New Project</p>
         </motion.button>
       </div>
