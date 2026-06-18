@@ -1,10 +1,45 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, forwardRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import svgPaths from './assets/svg-drawer-member';
 import imgOuterRingDashed from '../../../assets/outerRingDashed.png';
 import memberService from '../users/memberService';
 import roleService from '../roles-permissions/roleService';
 import useAuthStore from '../../auth/authStore';
+
+function parseDOB(str) {
+  if (!str) return null;
+  const [dd, mm, yyyy] = str.split('/');
+  if (!dd || !mm || !yyyy) return null;
+  const d = new Date(+yyyy, +mm - 1, +dd);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatDOB(date) {
+  if (!date) return '';
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+}
+
+const DOBInput = forwardRef(({ value, onClick, placeholder }, ref) => (
+  <div className="relative w-full cursor-pointer" onClick={onClick}>
+    <input
+      ref={ref}
+      type="text"
+      value={value}
+      placeholder={placeholder}
+      readOnly
+      className="bg-[#f4f7fb] h-[48px] w-full rounded-[4px] px-[16px] pr-[48px] font-['Inter:Regular',sans-serif] text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] outline-none focus:ring-2 focus:ring-[#0a1e3f]/10 cursor-pointer"
+    />
+    <div className="absolute right-[16px] top-1/2 -translate-y-1/2 size-[18px] pointer-events-none">
+      <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
+        <path d={svgPaths.p18a45f00} stroke="#5C7089" strokeWidth="1.26" />
+        <path d="M2.7 7.65H15.3" stroke="#5C7089" strokeWidth="1.26" />
+        <path d="M6.3 2.7V5.4M11.7 2.7V5.4" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.26" />
+      </svg>
+    </div>
+  </div>
+));
 
 const emptyForm = {
   fullName: '',
@@ -189,16 +224,17 @@ export default function AddMemberDrawer({ isOpen, onClose, onSave }) {
                 {/* Date of Birth */}
                 <div className="flex flex-col gap-[8px] w-full">
                   <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">DATE OF BIRTH</p>
-                  <div className="relative w-full">
-                    <input type="text" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} placeholder="dd/mm/yyyy" className="bg-[#f4f7fb] h-[48px] w-full rounded-[4px] px-[16px] pr-[48px] font-['Inter:Regular',sans-serif] text-[15px] text-[#0a1e3f] placeholder:text-[#5c7089] outline-none focus:ring-2 focus:ring-[#0a1e3f]/10" />
-                    <div className="absolute right-[16px] top-1/2 -translate-y-1/2 size-[18px] pointer-events-none">
-                      <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
-                        <path d={svgPaths.p18a45f00} stroke="#5C7089" strokeWidth="1.26" />
-                        <path d="M2.7 7.65H15.3" stroke="#5C7089" strokeWidth="1.26" />
-                        <path d="M6.3 2.7V5.4M11.7 2.7V5.4" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.26" />
-                      </svg>
-                    </div>
-                  </div>
+                  <DatePicker
+                    selected={parseDOB(formData.dateOfBirth)}
+                    onChange={(date) => setFormData({ ...formData, dateOfBirth: formatDOB(date) })}
+                    customInput={<DOBInput placeholder="dd/mm/yyyy" />}
+                    dateFormat="dd/MM/yyyy"
+                    maxDate={new Date()}
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    popperPlacement="bottom-start"
+                  />
                 </div>
 
                 {/* Blood Group */}

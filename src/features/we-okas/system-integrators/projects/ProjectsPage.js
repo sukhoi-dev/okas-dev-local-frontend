@@ -5,6 +5,7 @@ import AddProjectDrawer from './AddProjectDrawer';
 import { useProjects } from './useProjects';
 import projectService from './projectService';
 import { TopNav, LeftNav } from '../../shared/SharedNav';
+import { useIsDistributor } from '../../../../rbac/useRole';
 
 function mapApiProject(p) {
   const addressParts = [p.address, p.landmark].filter(Boolean).join(', ');
@@ -121,6 +122,7 @@ function KebabMenu({ onEdit, onDelete, onOpenChange }) {
 }
 
 export default function ProjectsPage() {
+  const isDistributor = useIsDistributor();
   const { data, isLoading, isError, refetch } = useProjects();
 
   const rawProjects = data?.body?.projects ?? data?.projects ?? (Array.isArray(data) ? data : []);
@@ -267,17 +269,19 @@ export default function ProjectsPage() {
         </div>
 
         {/* Add New Project */}
-        <motion.button
-          onClick={() => setShowAddDrawer(true)}
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.98 }}
-          className="bg-[#0a1e3f] flex gap-[8px] h-[44px] items-center justify-center px-[20px] rounded-[4px] shrink-0 hover:bg-[#0a2a5a] transition-colors shadow-sm hover:shadow-lg"
-        >
-          <motion.svg animate={{ rotate: [0, 90, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="shrink-0 size-[20px]" fill="none" viewBox="0 0 20 20">
-            <path d="M10 4V16M4 10H16" stroke="white" strokeLinecap="round" strokeWidth="1.6" />
-          </motion.svg>
-          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-white tracking-[0.14px] whitespace-nowrap">Add New Project</p>
-        </motion.button>
+        {!isDistributor && (
+          <motion.button
+            onClick={() => setShowAddDrawer(true)}
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            className="bg-[#0a1e3f] flex gap-[8px] h-[44px] items-center justify-center px-[20px] rounded-[4px] shrink-0 hover:bg-[#0a2a5a] transition-colors shadow-sm hover:shadow-lg"
+          >
+            <motion.svg animate={{ rotate: [0, 90, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="shrink-0 size-[20px]" fill="none" viewBox="0 0 20 20">
+              <path d="M10 4V16M4 10H16" stroke="white" strokeLinecap="round" strokeWidth="1.6" />
+            </motion.svg>
+            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-white tracking-[0.14px] whitespace-nowrap">Add New Project</p>
+          </motion.button>
+        )}
       </div>
       </div>{/* end sticky header */}
 
@@ -288,27 +292,26 @@ export default function ProjectsPage() {
       <div className="bg-white relative rounded-[4px] w-full border border-[#e2e2e2] overflow-auto flex-1 min-h-0">
         <div className="flex flex-col items-start min-w-[900px] w-full">
           {/* Header row */}
-          <div className="flex items-center px-[24px] h-[52px] w-full sticky top-0 bg-white z-10">
-            <div className="flex-1 min-w-0 pr-[16px]">
+          <div className="flex items-center px-[24px] h-[52px] w-full sticky top-0 bg-white z-10 border-b border-[#e2e2e2]">
+            <div className="flex-1 min-w-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">PROJECT INFORMATION</p>
             </div>
-            <div className="w-[160px] shrink-0">
+            <div className="w-[15%] min-w-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">SERIAL NUMBER</p>
             </div>
-            <div className="w-[180px] shrink-0">
+            <div className="w-[20%] min-w-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">ASSIGNED MEMBER</p>
             </div>
-            <div className="w-[160px] shrink-0">
+            <div className="w-[18%] min-w-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">INSTALLATION DATE</p>
             </div>
             <div className="w-[120px] shrink-0">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">STATUS</p>
             </div>
-            <div className="w-[80px] shrink-0 flex justify-center">
+            <div className="w-[60px] shrink-0 flex justify-end">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">ACTION</p>
             </div>
           </div>
-          <div className="bg-[#e2e2e2] h-px w-full sticky top-[52px] z-10" />
 
           {/* Loading */}
           {isLoading && (
@@ -353,17 +356,17 @@ export default function ProjectsPage() {
                         <p className="font-['Inter:Regular',sans-serif] text-[#5c7089] text-[12px] truncate">{project.address}</p>
                       </div>
                       {/* Serial Number */}
-                      <div className="w-[160px] shrink-0 pr-[16px]">
+                      <div className="w-[15%] min-w-0 pr-[16px]">
                         <p className="font-['Inter:Regular',sans-serif] text-[#1a7f64] text-[14px] truncate">{project.serialNo}</p>
                       </div>
                       {/* Assigned Member */}
-                      <div className="w-[180px] shrink-0 pr-[16px]">
+                      <div className="w-[20%] min-w-0 pr-[16px]">
                         <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[14px] truncate">
                           {project.assignedMember}
                         </p>
                       </div>
                       {/* Installation Date */}
-                      <div className="w-[160px] shrink-0 pr-[16px]">
+                      <div className="w-[18%] min-w-0 pr-[16px]">
                         <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[14px] truncate">{project.installationDate}</p>
                       </div>
                       {/* Status */}
@@ -371,7 +374,7 @@ export default function ProjectsPage() {
                         <StatusBadge status={project.status} />
                       </div>
                       {/* Kebab */}
-                      <div className="w-[80px] shrink-0 flex justify-center">
+                      <div className="w-[60px] shrink-0 flex justify-end">
                         <KebabMenu
                           onEdit={() => handleEdit(project.id)}
                           onDelete={() => handleDelete(project.id)}

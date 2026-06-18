@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Pencil, Archive, EyeOff, EyeIcon, Download, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { TopNav, LeftNav } from '../shared/SharedNav';
 import FilterDropdown from '../project-managers/FilterDropdown';
 import AddSIDrawer from './AddSIDrawer';
@@ -9,6 +10,7 @@ import {
   getSIs, addSI, editSI,
   toggleSIStatus, archiveSI, downloadSI,
 } from './siService';
+import apiClient from '../../../api/client';
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
@@ -168,6 +170,8 @@ export default function SystemIntegratorsListPage() {
   const [sis, setSIs]                        = useState([]);
   const [isLoading, setIsLoading]            = useState(false);
   const [fetchError, setFetchError]          = useState(null);
+  const [siOrgIds, setSiOrgIds]              = useState(new Set());
+  const [memberOrgIds, setMemberOrgIds]      = useState(new Set());
   const [searchQuery, setSearchQuery]        = useState('');
   const [appliedFilters, setAppliedFilters]  = useState({});
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -201,6 +205,18 @@ export default function SystemIntegratorsListPage() {
   }, [distributorId, accessToken, searchQuery, appliedFilters]);
 
   useEffect(() => { fetchSIs(); }, [fetchSIs]);
+
+  useEffect(() => {
+    apiClient.get('/we-okas/projects').then(res => {
+      const projects = res.data?.body?.projects ?? res.data?.projects ?? [];
+      setSiOrgIds(new Set(projects.map(p => p.organization_id).filter(Boolean)));
+    }).catch(() => {});
+
+    apiClient.get('/we-okas/members').then(res => {
+      const members = res.data?.body ?? res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
+      setMemberOrgIds(new Set(members.map(m => m.organization_id).filter(Boolean)));
+    }).catch(() => {});
+  }, []);
 
   // ── Click outside filter ────────────────────────────────────────────────────
   useEffect(() => {
@@ -253,6 +269,14 @@ export default function SystemIntegratorsListPage() {
   };
 
   const handleArchive = async (si) => {
+    if (siOrgIds.has(si.id)) {
+      toast.error('Cannot delete — this SI has projects assigned.');
+      return;
+    }
+    if (memberOrgIds.has(si.id)) {
+      toast.error('Cannot delete — this SI has members assigned.');
+      return;
+    }
     await archiveSI(accessToken, distributorId, si.id);
     setSIs(prev => prev.filter(s => s.id !== si.id));
     if (selectedSI?.id === si.id) setSelectedSI(null);

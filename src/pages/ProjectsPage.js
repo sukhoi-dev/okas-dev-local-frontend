@@ -53,12 +53,14 @@ export default function ProjectsPage() {
             </svg>
           </button>
           <div style={{ flex: 1 }} />
-          <button
-            onClick={() => window.location.pathname = '/projects/new'}
-            style={{ background: '#1C1C1E', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
-          >
-            Add New Project
-          </button>
+          {user.role !== 'distributor' && (
+            <button
+              onClick={() => window.location.pathname = '/projects/new'}
+              style={{ background: '#1C1C1E', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Add New Project
+            </button>
+          )}
         </div>
 
         {/* Table */}
