@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { handleCallback } from '../auth';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 const ERROR_MESSAGES = {
   no_access:        'Your account has not been set up yet. Please contact your OKAS administrator to get access.',
@@ -44,9 +44,8 @@ export default function CallbackPage() {
         const json = await res.json();
         const isSuperAdmin = json.data?.is_super_admin === true;
         sessionStorage.setItem('is_super_admin', isSuperAdmin ? 'true' : 'false');
-        sessionStorage.setItem('user_roles', JSON.stringify(json.data?.roles || []));
 
-        window.location.replace('/projects');
+        window.location.pathname = '/projects';
       })
       .catch((e) => {
         setError(e.message);
