@@ -34,7 +34,7 @@ export async function initiateGoogleLogin() {
   const hashed = await sha256(codeVerifier);
   const codeChallenge = base64urlEncode(hashed);
 
-  sessionStorage.setItem('pkce_verifier', codeVerifier);
+  localStorage.setItem('pkce_verifier', codeVerifier);
 
   const params = new URLSearchParams({
     response_type:         'code',
@@ -50,7 +50,7 @@ export async function initiateGoogleLogin() {
 }
 
 export async function handleGoogleCallback(code) {
-  const codeVerifier = sessionStorage.getItem('pkce_verifier');
+  const codeVerifier = localStorage.getItem('pkce_verifier');
   if (!codeVerifier) throw new Error('Missing PKCE verifier');
 
   const body = new URLSearchParams({
@@ -73,7 +73,7 @@ export async function handleGoogleCallback(code) {
   }
 
   const tokens = await res.json();
-  sessionStorage.removeItem('pkce_verifier');
+  localStorage.removeItem('pkce_verifier');
 
   return {
     cognitoUser:  parseJwt(tokens.id_token),
