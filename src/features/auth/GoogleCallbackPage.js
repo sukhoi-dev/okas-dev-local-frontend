@@ -54,7 +54,9 @@ export default function GoogleCallbackPage() {
         }
 
         const json = await res.json();
-        const user = json.data;
+        const raw  = json.data;
+        // Super admins come from SSM without a role field — synthesize 'admin' so RBAC works
+        const user = raw.is_super_admin ? { ...raw, role: 'admin' } : raw;
         // Permissions are fetched lazily by authStore.refreshPermissions on mount
         storeLogin(user, accessToken, [], {});
         navigate(getRoleRedirectPath(user), { replace: true });
