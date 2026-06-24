@@ -50,7 +50,7 @@ function getResultPath(role, type) {
 export function TopNav() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const homePath = (NAV_CONFIG[user?.role] ?? NAV_CONFIG.pm)[0].path;
+  const homePath = (NAV_CONFIG[user?.org_type] ?? NAV_CONFIG.pm)[0].path;
 
   // Avatar dropdown
   const [avatarOpen, setAvatarOpen]     = useState(false);
@@ -138,9 +138,9 @@ export function TopNav() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const logout = useAuthStore((s) => s.logout);
   const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
+    logout();
     navigate('/auth/login');
   };
 
@@ -359,7 +359,7 @@ export function LeftNav() {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
 
-  const navItems = NAV_CONFIG[user?.role] ?? NAV_CONFIG.pm;
+  const navItems = NAV_CONFIG[user?.org_type] ?? NAV_CONFIG.pm;
 
   const isActive = (path) => location.pathname === path;
 

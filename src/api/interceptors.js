@@ -1,5 +1,6 @@
 import env from '../config/env';
 import { HTTP_STATUS } from '../config/constants';
+import useAuthStore from '../features/auth/authStore';
 
 let isRefreshing = false;
 let failedQueue = [];
@@ -30,7 +31,10 @@ export function applyInterceptors(client) {
         orig._retry = true;
         isRefreshing = true;
         const refresh = localStorage.getItem(env.REFRESH_TOKEN_KEY);
-        if (!refresh) { window.location.href = '/auth/login'; return Promise.reject(error); }
+        if (!refresh) {
+          useAuthStore.getState().logout();
+          return Promise.reject(error);
+        }
         try {
           const { data } = await client.post('/auth/refresh', { refreshToken: refresh });
           localStorage.setItem(env.AUTH_TOKEN_KEY, data.accessToken);
@@ -41,7 +45,7 @@ export function applyInterceptors(client) {
           processQueue(e, null);
           localStorage.removeItem(env.AUTH_TOKEN_KEY);
           localStorage.removeItem(env.REFRESH_TOKEN_KEY);
-          window.location.href = '/auth/login';
+          useAuthStore.getState().logout();
           return Promise.reject(e);
         } finally { isRefreshing = false; }
       }

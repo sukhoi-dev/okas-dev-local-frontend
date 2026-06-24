@@ -1,4 +1,5 @@
 const BASE_URL = '/api';
+const BASE_URL1 = 'https://api.okas.ai';
 
 async function fetchPermissions(accessToken) {
   try {
@@ -14,7 +15,7 @@ async function fetchPermissions(accessToken) {
 }
 
 export async function sendOtp(email) {
-  const res = await fetch(`${BASE_URL}/auth/otp/send`, {
+  const res = await fetch(`${BASE_URL1}/api/auth/send-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
@@ -29,22 +30,19 @@ export async function sendOtp(email) {
 }
 
 export async function verifyOtp(email, otp) {
-  const res = await fetch(`${BASE_URL}/auth/otp/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, otp, keep_logged_in: false }),
-  });
+  const params = new URLSearchParams({ email, otp, keep_logged_in: false });
+  const res = await fetch(`${BASE_URL}/auth/verify-otp?${params}`);
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || data.detail || 'Invalid or expired OTP');
 
-  const accessToken    = data.access_token ?? null;
-  const permissionsData = accessToken ? await fetchPermissions(accessToken) : { flat: [], grouped: {} };
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || data.detail || 'Invalid or expired OTP');
+  }
 
   return {
-    sessionToken: data.token ?? null,
-    accessToken,
-    user:         data.user ?? null,
-    permissionsData,
+    org_type:        data.org_type ?? null,
+    email:           data.email ?? email,
+    organization_id: data.organization_id ?? null,
+    access_token:    data.access_token ?? null,
   };
 }
 

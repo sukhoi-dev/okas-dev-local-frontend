@@ -67,8 +67,9 @@ export default function OtpPage() {
     setError('');
     setIsLoading(true);
     try {
-      const { accessToken, user, permissionsData } = await verifyOtp(email, otpValue);
-      storeLogin(user, accessToken, permissionsData?.flat ?? [], permissionsData?.grouped ?? {});
+      const { org_type, email: verifiedEmail, organization_id, access_token } = await verifyOtp(email, otpValue);
+      const user = { email: verifiedEmail, org_type, organization_id };
+      storeLogin(user, access_token, [], {});
       navigate(getRoleRedirectPath(user));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed');

@@ -164,8 +164,7 @@ function DetailDrawer({ si, onClose, onEdit }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SystemIntegratorsListPage() {
-  const { user, accessToken }               = useAuthStore();
-  const distributorId                        = user?.organization_id;
+  const { accessToken }                      = useAuthStore();
 
   const [sis, setSIs]                        = useState([]);
   const [isLoading, setIsLoading]            = useState(false);
@@ -182,7 +181,7 @@ export default function SystemIntegratorsListPage() {
 
   // ── Fetch list ──────────────────────────────────────────────────────────────
   const fetchSIs = useCallback(async () => {
-    if (!distributorId || !accessToken) return;
+    if (!accessToken) return;
     setIsLoading(true);
     setFetchError(null);
     try {
@@ -190,7 +189,7 @@ export default function SystemIntegratorsListPage() {
       const selectedCompanies = appliedFilters['Company Name'] ?? [];
       const selectedStatuses  = appliedFilters['Status']       ?? [];
 
-      const res = await getSIs(accessToken, distributorId, {
+      const res = await getSIs(accessToken, {
         search:  searchQuery || undefined,
         name:    selectedNames.length     ? selectedNames     : undefined,
         company: selectedCompanies.length ? selectedCompanies : undefined,
@@ -202,7 +201,7 @@ export default function SystemIntegratorsListPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [distributorId, accessToken, searchQuery, appliedFilters]);
+  }, [accessToken, searchQuery, appliedFilters]);
 
   useEffect(() => { fetchSIs(); }, [fetchSIs]);
 
@@ -252,19 +251,19 @@ export default function SystemIntegratorsListPage() {
 
   // ── Actions ─────────────────────────────────────────────────────────────────
   const handleAdd = async (formData) => {
-    const res = await addSI(accessToken, distributorId, buildPayload(formData));
+    const res = await addSI(accessToken, buildPayload(formData));
     setSIs(prev => [res.data, ...prev]);
   };
 
   const handleEdit = async (formData) => {
-    const res = await editSI(accessToken, distributorId, editingSI.id, buildPayload(formData));
+    const res = await editSI(accessToken, editingSI.id, buildPayload(formData));
     setSIs(prev => prev.map(s => s.id === res.data.id ? res.data : s));
     if (selectedSI?.id === res.data.id) setSelectedSI(res.data);
   };
 
   const handleToggleStatus = async (si) => {
     const newStatus = si.status === 'Active' ? 'Inactive' : 'Active';
-    const res = await toggleSIStatus(accessToken, distributorId, si.id, newStatus);
+    const res = await toggleSIStatus(accessToken, si.id, newStatus);
     setSIs(prev => prev.map(s => s.id === si.id ? res.data : s));
   };
 
@@ -277,13 +276,13 @@ export default function SystemIntegratorsListPage() {
       toast.error('Cannot delete — this SI has members assigned.');
       return;
     }
-    await archiveSI(accessToken, distributorId, si.id);
+    await archiveSI(accessToken, si.id);
     setSIs(prev => prev.filter(s => s.id !== si.id));
     if (selectedSI?.id === si.id) setSelectedSI(null);
   };
 
   const handleDownload = async (si) => {
-    await downloadSI(accessToken, distributorId, si.id, 'pdf');
+    await downloadSI(accessToken, si.id, 'pdf');
   };
 
   const openEdit = (si) => {

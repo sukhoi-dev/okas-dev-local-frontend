@@ -67,7 +67,8 @@ function KebabMenu({ memberId, onEdit, onDelete, canEdit, canDelete }) {
 }
 
 export default function DistributorMembers() {
-  const permissions = useAuthStore((s) => s.permissions);
+  const permissions    = useAuthStore((s) => s.permissions);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const canCreate = permissions.includes('members.create');
   const canEdit   = permissions.includes('members.edit');
   const canDelete = permissions.includes('members.delete');
@@ -75,6 +76,7 @@ export default function DistributorMembers() {
   const { data: rawMembers = [], isLoading, error: fetchError, refetch } = useQuery({
     queryKey: ['distributor-members'],
     queryFn: () => memberService.list(),
+    enabled: isAuthenticated,
   });
   const members = rawMembers.map(mapApiMember);
 
@@ -197,7 +199,7 @@ export default function DistributorMembers() {
               </div>
 
               {isLoading && <div className="flex items-center justify-center w-full py-[40px]"><p className="font-['Inter:Regular',sans-serif] text-[#5c7089] text-[14px]">Loading members...</p></div>}
-              {fetchError && !isLoading && <div className="flex items-center justify-center w-full py-[40px]"><p className="font-['Inter:Regular',sans-serif] text-red-500 text-[14px]">{fetchError}</p></div>}
+              {fetchError && !isLoading && <div className="flex items-center justify-center w-full py-[40px]"><p className="font-['Inter:Regular',sans-serif] text-red-500 text-[14px]">{fetchError?.message || String(fetchError)}</p></div>}
 
               <AnimatePresence mode="popLayout">
                 {!isLoading && !fetchError && filteredMembers.map((member, index) => (
