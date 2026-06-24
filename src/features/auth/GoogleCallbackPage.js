@@ -10,11 +10,11 @@ const ERROR_MESSAGES = {
 };
 
 function getRoleRedirectPath(user) {
-  if (user?.is_super_admin)             return '/weokas/dashboard';
+  if (user?.is_super_admin)             return '/we-okas/dashboard';
   if (user?.org_type === 'distributor') return '/distributor/dashboard';
   if (user?.org_type === 'si')          return '/si/dashboard';
   switch (user?.role) {
-    case 'admin':            return '/weokas/dashboard';
+    case 'admin':            return '/we-okas/dashboard';
     case 'Viewer':           return '/user/dashboard';
     case 'Project Manager':
     default:                 return '/dashboard';
