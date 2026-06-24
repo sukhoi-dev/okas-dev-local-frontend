@@ -10,6 +10,7 @@ const ERROR_MESSAGES = {
 };
 
 function getRoleRedirectPath(user) {
+  if (user?.is_super_admin)             return '/weokas/dashboard';
   if (user?.org_type === 'distributor') return '/distributor/dashboard';
   if (user?.org_type === 'si')          return '/si/dashboard';
   switch (user?.role) {
@@ -40,11 +41,11 @@ export default function GoogleCallbackPage() {
     }
 
     handleGoogleCallback(code)
-      .then(async ({ cognitoUser, idToken }) => {
-        const res = await fetch(`${env.API_BASE_URL}/auth/google/verify`, {
+      .then(async ({ cognitoUser, accessToken }) => {
+        const res = await fetch(`${env.API_BASE_URL}/auth/verify`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ email: cognitoUser.email, id_token: idToken }),
+          body:    JSON.stringify({ email: cognitoUser.email }),
         });
 
         if (!res.ok) {
@@ -53,8 +54,9 @@ export default function GoogleCallbackPage() {
         }
 
         const json = await res.json();
-        const { access_token, user, permissions } = json;
-        storeLogin(user, access_token, permissions?.flat ?? [], permissions?.grouped ?? {});
+        const user = json.data;
+        // Permissions are fetched lazily by authStore.refreshPermissions on mount
+        storeLogin(user, accessToken, [], {});
         navigate(getRoleRedirectPath(user), { replace: true });
       })
       .catch((e) => setError(e.message));

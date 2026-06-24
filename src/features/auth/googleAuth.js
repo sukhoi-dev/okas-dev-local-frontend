@@ -75,5 +75,9 @@ export async function handleGoogleCallback(code) {
   const tokens = await res.json();
   sessionStorage.removeItem('pkce_verifier');
 
-  return { cognitoUser: parseJwt(tokens.id_token), idToken: tokens.id_token };
+  return {
+    cognitoUser:  parseJwt(tokens.id_token),
+    idToken:      tokens.id_token,
+    accessToken:  tokens.access_token,
+  };
 }
