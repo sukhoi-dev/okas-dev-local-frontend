@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { handleGoogleCallback } from './googleAuth';
 import useAuthStore from './authStore';
+import env from '../../config/env';
 
 const ERROR_MESSAGES = {
   no_access:        'Your account has not been set up yet. Please contact your OKAS administrator to get access.',
@@ -40,7 +41,7 @@ export default function GoogleCallbackPage() {
 
     handleGoogleCallback(code)
       .then(async ({ cognitoUser, idToken }) => {
-        const res = await fetch('/api/auth/google/verify', {
+        const res = await fetch(`${env.API_BASE_URL}/auth/google/verify`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ email: cognitoUser.email, id_token: idToken }),

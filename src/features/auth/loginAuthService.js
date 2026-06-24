@@ -1,5 +1,6 @@
-const BASE_URL = '/api';
-const BASE_URL1 = 'https://api.okas.ai';
+import env from '../../config/env';
+
+const BASE_URL = env.API_BASE_URL;
 
 async function fetchPermissions(accessToken) {
   try {
@@ -15,7 +16,7 @@ async function fetchPermissions(accessToken) {
 }
 
 export async function sendOtp(email) {
-  const res = await fetch(`${BASE_URL1}/api/auth/send-otp`, {
+  const res = await fetch(`${BASE_URL}/auth/send-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),

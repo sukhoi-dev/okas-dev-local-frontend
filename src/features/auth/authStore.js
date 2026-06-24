@@ -30,7 +30,7 @@ const useAuthStore = create(
         const token = localStorage.getItem(env.AUTH_TOKEN_KEY);
         if (!token) return;
         try {
-          const res = await fetch('/api/auth/permissions', {
+          const res = await fetch(`${env.API_BASE_URL}/auth/permissions`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (!res.ok) return;
