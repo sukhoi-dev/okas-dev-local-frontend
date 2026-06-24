@@ -1,6 +1,6 @@
-const COGNITO_DOMAIN = process.env.REACT_APP_COGNITO_DOMAIN;
-const CLIENT_ID = process.env.REACT_APP_COGNITO_CLIENT_ID;
-const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI || window.location.origin + '/callback';
+const COGNITO_DOMAIN = import.meta.env.VITE_COGNITO_DOMAIN;
+const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID;
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || window.location.origin + '/callback';
 
 function generateRandomString(length) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -86,38 +86,18 @@ function parseJwt(token) {
 }
 
 export function getUser() {
-  // Try Cognito JWT first (Google Sign-In)
   const token = sessionStorage.getItem('id_token');
-  if (token) {
-    try { return parseJwt(token); } catch {}
-  }
-  // Fall back to OTP session (Email OTP login)
-  const otpSession = sessionStorage.getItem('otp_session');
-  if (otpSession) {
-    try { return JSON.parse(otpSession); } catch {}
-  }
-  return null;
-}
-
-/** Highest role from sessionStorage (set at login via /api/auth/verify). */
-export function getUserRole() {
-  if (sessionStorage.getItem('is_super_admin') === 'true') return 'super_admin';
+  if (!token) return null;
   try {
-    const roles = JSON.parse(sessionStorage.getItem('user_roles') || '[]');
-    const HIERARCHY = ['distributor_admin', 'si_admin', 'project_manager', 'programmer'];
-    for (const r of HIERARCHY) {
-      if (roles.includes(r)) return r;
-    }
-    return roles[0] || null;
-  } catch { return null; }
+    return parseJwt(token);
+  } catch {
+    return null;
+  }
 }
 
 export function logout() {
   sessionStorage.removeItem('id_token');
   sessionStorage.removeItem('access_token');
-  sessionStorage.removeItem('otp_session');
-  sessionStorage.removeItem('is_super_admin');
-  sessionStorage.removeItem('user_roles');
 
   const params = new URLSearchParams({
     client_id: CLIENT_ID,

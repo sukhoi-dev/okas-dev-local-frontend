@@ -1,139 +1,131 @@
-/* ─── Reset / Base ───────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; }
-
-/* ─── Layout ─────────────────────────────────────────── */
+/* ─── Layout ─────────────────────────────────────── */
 .login-root {
   display: flex;
   min-height: 100vh;
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* ─── Left Panel ─────────────────────────────────────── */
+/* ─── Left Panel ─────────────────────────────────── */
 .login-left {
   flex: 1;
-  background-color: #100800;
-  background-image:
-    radial-gradient(ellipse 55% 35% at 28% 38%, rgba(210,130,30,0.65) 0%, transparent 65%),
-    radial-gradient(ellipse 40% 28% at 68% 32%, rgba(190,110,20,0.55) 0%, transparent 60%),
-    radial-gradient(ellipse 30% 22% at 48% 22%, rgba(230,150,45,0.50) 0%, transparent 55%),
-    radial-gradient(ellipse 25% 18% at 82% 55%, rgba(175,100,15,0.40) 0%, transparent 55%),
-    radial-gradient(ellipse 20% 16% at 15% 65%, rgba(160,90,10,0.35) 0%, transparent 50%),
-    linear-gradient(160deg, #0d0600 0%, #1c0e02 45%, #120900 100%);
+  background: linear-gradient(160deg, #1C1C1E 60%, #2C2A26 100%);
   display: flex;
   flex-direction: column;
-  padding: 36px 48px 32px;
-  position: relative;
-  overflow: hidden;
-}
-
-/* subtle vignette overlay for depth */
-.login-left::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, rgba(0,0,0,0.45) 100%);
-  pointer-events: none;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2.5rem;
+  color: #fff;
 }
 
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  position: relative;
-  z-index: 1;
+  gap: 14px;
+  margin-bottom: 3.5rem;
+  align-self: flex-start;
 }
 
-.brand-text {
-  font-size: 1.5rem;
-  font-weight: 800;
-  background: linear-gradient(90deg, #1DB5AA 0%, #E87B3B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.brand-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
   letter-spacing: 1px;
+  margin: 0;
 }
 
-.login-left-footer {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.30);
+.brand-signature {
+  color: #C5A25E;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.brand-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  padding-top: 16px;
-  position: relative;
-  z-index: 1;
 }
 
-/* ─── Right Panel ────────────────────────────────────── */
+.hero-icon {
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.hero-tagline {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+  margin: 0 0 1rem;
+  letter-spacing: 0.3px;
+}
+
+.hero-sub {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ─── Right Panel ────────────────────────────────── */
 .login-right {
-  width: 500px;
-  background: #fff;
+  width: 480px;
+  background: #F7F6F4;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 40px;
-  box-shadow: -8px 0 40px rgba(0,0,0,0.08);
+  padding: 3rem 2rem;
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-}
-
-.login-header {
-  margin-bottom: 2rem;
+  max-width: 380px;
 }
 
 .login-title {
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #0D1B2A;
-  margin: 0 0 0.3rem;
-  letter-spacing: -0.3px;
+  color: #1C1C1E;
+  margin: 0 0 0.4rem;
 }
 
 .login-subtitle {
   font-size: 0.9rem;
-  color: #8A9BB0;
-  margin: 0;
+  color: #888;
+  margin: 0 0 2rem;
   line-height: 1.5;
 }
 
-/* ─── Google Button ──────────────────────────────────── */
+/* ─── Google Button ──────────────────────────────── */
 .btn-google {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 0.78rem;
+  padding: 0.75rem;
   background: #fff;
-  border: 1.5px solid #DDE3EC;
+  border: 1.5px solid #E0DDD8;
   border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #0D1B2A;
+  color: #1C1C1E;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  font-family: inherit;
+  transition: box-shadow 0.15s, border-color 0.15s;
 }
 
-.btn-google:hover:not(:disabled) {
-  border-color: #1DB5AA;
-  box-shadow: 0 2px 12px rgba(29,181,170,0.12);
+.btn-google:hover {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-color: #C5A25E;
 }
 
-.btn-google:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* ─── Divider ────────────────────────────────────────── */
+/* ─── Divider ────────────────────────────────────── */
 .divider {
   display: flex;
   align-items: center;
   margin: 1.5rem 0;
-  gap: 0;
   color: #ccc;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 
 .divider::before,
@@ -141,92 +133,64 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: #E9EDF3;
+  background: #E0DDD8;
 }
 
 .divider span {
-  padding: 0 0.9rem;
-  color: #B0BBCC;
-  white-space: nowrap;
+  padding: 0 1rem;
+  color: #aaa;
 }
 
-/* ─── Form Fields ────────────────────────────────────── */
+/* ─── Form Fields ────────────────────────────────── */
 .field-label {
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #4A5568;
-  margin-bottom: 0.45rem;
-  letter-spacing: 0.2px;
+  color: #555;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 .field-input {
   width: 100%;
-  padding: 0.72rem 0.9rem;
-  border: 1.5px solid #DDE3EC;
+  padding: 0.7rem 0.9rem;
+  border: 1.5px solid #E0DDD8;
   border-radius: 8px;
   font-size: 0.95rem;
-  color: #0D1B2A;
-  background: #FAFBFC;
+  color: #1C1C1E;
+  background: #fff;
   outline: none;
   box-sizing: border-box;
   margin-bottom: 1rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  font-family: inherit;
+  transition: border-color 0.15s;
 }
 
 .field-input:focus {
-  border-color: #1DB5AA;
-  box-shadow: 0 0 0 3px rgba(29,181,170,0.10);
-  background: #fff;
+  border-color: #C5A25E;
 }
 
-.field-input--error {
-  border-color: #E53E3E !important;
-  box-shadow: 0 0 0 3px rgba(229,62,62,0.08) !important;
-}
-
-.field-error {
-  font-size: 0.78rem;
-  color: #E53E3E;
-  margin: -0.6rem 0 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  line-height: 1.4;
-}
-
-/* ─── Primary Button ─────────────────────────────────── */
+/* ─── Primary Button ─────────────────────────────── */
 .btn-primary {
   width: 100%;
-  padding: 0.82rem;
-  background: #0D1B2A;
+  padding: 0.8rem;
+  background: #1C1C1E;
   color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
   transition: background 0.15s, box-shadow 0.15s;
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: #1a2e42;
-  box-shadow: 0 4px 16px rgba(13,27,42,0.25);
+.btn-primary:hover {
+  background: #C5A25E;
+  box-shadow: 0 4px 16px rgba(197, 162, 94, 0.35);
 }
 
-.btn-primary:disabled {
-  opacity: 0.50;
-  cursor: not-allowed;
-}
-
-/* ─── OTP ────────────────────────────────────────────── */
+/* ─── OTP ────────────────────────────────────────── */
 .otp-row {
   display: flex;
   gap: 10px;
@@ -235,96 +199,89 @@
 }
 
 .otp-box {
-  width: 52px;
-  height: 58px;
+  width: 46px;
+  height: 52px;
   text-align: center;
-  font-size: 1.4rem;
-  font-weight: 700;
-  border: 1.5px solid #DDE3EC;
-  border-radius: 10px;
-  background: #FAFBFC;
-  color: #0D1B2A;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border: 1.5px solid #E0DDD8;
+  border-radius: 8px;
+  background: #fff;
+  color: #1C1C1E;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  font-family: inherit;
 }
 
 .otp-box:focus {
-  border-color: #1DB5AA;
-  box-shadow: 0 0 0 3px rgba(29,181,170,0.12);
-  background: #fff;
+  border-color: #C5A25E;
+  box-shadow: 0 0 0 2px rgba(197,162,94,0.15);
 }
 
-.otp-box--error {
-  border-color: #E53E3E !important;
-}
-
-/* ─── Notes & Links ──────────────────────────────────── */
+/* ─── Notes & Links ──────────────────────────────── */
 .login-note {
-  font-size: 0.77rem;
-  color: #B0BBCC;
+  font-size: 0.78rem;
+  color: #aaa;
   text-align: center;
   margin-top: 1.5rem;
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 .link {
-  color: #1DB5AA;
+  color: #C5A25E;
   text-decoration: none;
   font-weight: 500;
 }
 
-.link:hover { text-decoration: underline; }
+.link:hover {
+  text-decoration: underline;
+}
 
 .link-btn {
   background: none;
   border: none;
   padding: 0;
-  color: #1DB5AA;
-  font-size: 0.77rem;
-  font-weight: 600;
+  color: #C5A25E;
+  font-size: 0.78rem;
+  font-weight: 500;
   cursor: pointer;
-  font-family: inherit;
+  text-decoration: underline;
 }
 
-.link-btn:hover { text-decoration: underline; }
-
-/* ─── Back button ────────────────────────────────────── */
 .btn-back {
   background: none;
   border: none;
   padding: 0;
-  color: #8A9BB0;
-  font-size: 0.875rem;
+  color: #888;
+  font-size: 0.9rem;
   cursor: pointer;
-  margin-bottom: 1.75rem;
-  display: inline-flex;
+  margin-bottom: 1.5rem;
+  display: flex;
   align-items: center;
-  gap: 5px;
-  font-family: inherit;
-  transition: color 0.15s;
+  gap: 4px;
 }
 
-.btn-back:hover { color: #0D1B2A; }
+.btn-back:hover {
+  color: #1C1C1E;
+}
 
-/* ─── Spinner keyframe ───────────────────────────────── */
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ─── Responsive ─────────────────────────────────────── */
-@media (max-width: 860px) {
-  .login-root { flex-direction: column; }
-  .login-left {
-    padding: 28px 28px 24px;
-    min-height: 180px;
+/* ─── Responsive ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .login-root {
+    flex-direction: column;
   }
+  .login-left {
+    padding: 2rem;
+    min-height: 200px;
+  }
+  .login-brand {
+    align-self: center;
+    margin-bottom: 1.5rem;
+  }
+  .hero-tagline {
+    font-size: 1.4rem;
+  }
+  .hero-icon { display: none; }
   .login-right {
     width: 100%;
-    padding: 36px 24px;
+    padding: 2rem 1.5rem;
   }
-}
-
-@media (max-width: 480px) {
-  .login-left { display: none; }
-  .login-right { min-height: 100vh; }
-  .otp-box { width: 42px; height: 50px; font-size: 1.2rem; }
 }

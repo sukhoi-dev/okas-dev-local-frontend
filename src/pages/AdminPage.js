@@ -1,65 +1,35 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { getUser, logout } from '../auth';
+import { getUser } from '../auth';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+// ── Sidebar config (mirrors ProjectsPage) ────────────────────
+const SIDEBAR_ITEMS = [
+  { icon: HomeIcon,    label: 'Home',    path: '/projects' },
+  { icon: BoxIcon,     label: 'Devices', path: '/devices' },
+  { icon: UsersIcon,   label: 'Users',   path: '/users' },
+  { icon: SearchIcon,  label: 'Search',  path: '/search' },
+  { icon: SupportIcon, label: 'Support', path: '/support' },
+];
 
 // ── Colours ───────────────────────────────────────────────────
-const DARK   = '#0D1B2A';
-const BORDER = '#E9EDF3';
+const GOLD   = '#C5A25E';
+const DARK   = '#1C1C1E';
+const BORDER = '#E8E8E8';
 
 const ROLE_BADGE_COLORS = {
-  super_admin:      { bg: '#FFF0D6', color: '#A0700A' },
-  distributor_admin:{ bg: '#FDE8F5', color: '#8B1A6B' },
-  si_admin:         { bg: '#E8F4FF', color: '#1565C0' },
-  programmer:       { bg: '#E8F9F0', color: '#1B6B3A' },
-  project_manager:  { bg: '#F4E8FF', color: '#6A1BA0' },
+  super_admin:     { bg: '#FFF0D6', color: '#A0700A' },
+  si_admin:        { bg: '#E8F4FF', color: '#1565C0' },
+  programmer:      { bg: '#E8F9F0', color: '#1B6B3A' },
+  project_manager: { bg: '#F4E8FF', color: '#6A1BA0' },
 };
 
 export default function AdminPage() {
-  // Stable — computed once on mount, never re-evaluated on re-renders
-  const [user] = useState(() => getUser());
-  const [authState, setAuthState] = useState(
-    // 'checking' if flag not yet set (e.g. session pre-dates this feature),
-    // 'ok' if already confirmed, 'denied' if confirmed not super admin
-    sessionStorage.getItem('is_super_admin') === 'true'  ? 'ok' :
-    sessionStorage.getItem('is_super_admin') === 'false' ? 'denied' :
-    'checking'
-  );
+  const user = getUser();
+  const isSuperAdmin = sessionStorage.getItem('is_super_admin') === 'true';
 
-  useEffect(() => {
-    if (!user) { window.location.replace('/login'); return; }
-    if (authState !== 'checking') return;
-    // Flag not in sessionStorage — re-verify against the backend
-    fetch(`${API_BASE}/api/auth/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email }),
-    })
-      .then(r => r.json())
-      .then(json => {
-        const isSuper = json.data?.is_super_admin === true;
-        sessionStorage.setItem('is_super_admin', isSuper ? 'true' : 'false');
-        setAuthState(isSuper ? 'ok' : 'denied');
-      })
-      .catch(() => setAuthState('denied'));
-  }, [user, authState]);
-
-  useEffect(() => {
-    if (authState === 'denied') window.location.replace('/projects');
-  }, [authState]);
-
-  if (!user || authState === 'denied') return null;
-  if (authState === 'checking') {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#EDEDED' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 36, height: 36, border: '3px solid #C5A25E', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
-          <p style={{ color: '#666', fontSize: 14, fontFamily: 'system-ui' }}>Checking access…</p>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+  if (!user) { window.location.pathname = '/login'; return null; }
+  if (!isSuperAdmin) { window.location.pathname = '/projects'; return null; }
 
   return <AdminPageInner user={user} />;
 }
@@ -73,7 +43,7 @@ function AdminPageInner({ user }) {
   const [orgFilter, setOrgFilter] = useState('');
 
   // Modal state
-  const [modal,   setModal]   = useState(null); // null | 'create' | 'edit' | 'delete' | 'roles' | 'create-org'
+  const [modal,   setModal]   = useState(null); // null | 'create' | 'edit' | 'delete' | 'roles'
   const [target,  setTarget]  = useState(null); // user being acted on
   const [saving,  setSaving]  = useState(false);
   const [err,     setErr]     = useState('');
@@ -81,7 +51,6 @@ function AdminPageInner({ user }) {
   // Form state
   const [form,    setForm]    = useState({});
   const [selRoles, setSelRoles] = useState([]);
-  const [orgForm, setOrgForm] = useState({ name: '', org_type: 'si', email: '', phone: '' });
 
   const loadUsers = useCallback(() => {
     const params = new URLSearchParams();
@@ -140,38 +109,17 @@ function AdminPageInner({ user }) {
   }
 
   async function handleCreate() {
-    if (!form.organization_id) { setErr('Please select an organisation first. Use "Add Organisation" to create one if needed.'); return; }
     setSaving(true); setErr('');
     try {
       const res = await fetch(`${API_BASE}/api/admin/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, organization_id: parseInt(form.organization_id), role_ids: selRoles }),
+        body: JSON.stringify({ ...form, role_ids: selRoles }),
       });
       const json = await res.json();
       if (!res.ok) { setErr(json.detail || 'Failed to create user'); setSaving(false); return; }
       closeModal();
       loadUsers();
-    } catch (e) { setErr(e.message); }
-    setSaving(false);
-  }
-
-  async function handleCreateOrg() {
-    if (!orgForm.name.trim()) { setErr('Organisation name is required'); return; }
-    setSaving(true); setErr('');
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/orgs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...orgForm, name: orgForm.name.trim() }),
-      });
-      const json = await res.json();
-      if (!res.ok) { setErr(json.detail || 'Failed to create organisation'); setSaving(false); return; }
-      // Reload orgs and select the new one
-      const orgsRes = await fetch(`${API_BASE}/api/admin/orgs`).then(r => r.json());
-      const newOrgs = orgsRes.data || [];
-      setOrgs(newOrgs);
-      closeModal();
     } catch (e) { setErr(e.message); }
     setSaving(false);
   }
@@ -233,55 +181,14 @@ function AdminPageInner({ user }) {
   // ── Render ───────────────────────────────────────────────────
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "'Inter','Segoe UI',system-ui,sans-serif", background: '#F0F2F5' }}>
-      {/* Header */}
-      <header style={headerStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: 210, flexShrink: 0 }}>
-          <span style={logoTextStyle}>WE.OKAS</span>
-        </div>
-        <div style={{ flex: 1, maxWidth: 480, position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <svg style={{ position: 'absolute', left: 12, pointerEvents: 'none' }} width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#9BA8B7" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input placeholder="Search users…" value={search} onChange={e => setSearch(e.target.value)} style={{ width: '100%', padding: '8px 12px 8px 38px', border: '1.5px solid #E9EDF3', borderRadius: 8, fontSize: 14, outline: 'none', fontFamily: 'inherit', background: '#F8FAFB' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: '#FFF8EC', color: '#92620B', border: '1px solid #F6D58A', whiteSpace: 'nowrap' }}>
-            Super Admin
-          </span>
-          <button style={iconBtnStyle} title="Notifications">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#4A5568" strokeWidth="1.8"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-          </button>
-          {user.picture
-            ? <img src={user.picture} alt="avatar" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }} onClick={logout} title="Sign out" />
-            : <div style={{ width: 34, height: 34, borderRadius: '50%', background: DARK, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }} onClick={logout} title="Sign out">{(user.name || user.email || 'U')[0].toUpperCase()}</div>
-          }
-        </div>
-      </header>
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#EDEDED' }}>
+      <Sidebar active="Users" />
+      <main style={{ flex: 1, padding: '36px 40px' }}>
+        <TopBar user={user} />
 
-      {/* Body */}
-      <div style={{ display: 'flex', flex: 1 }}>
-        {/* Sidebar */}
-        <aside style={{ width: 210, background: '#fff', borderRight: '1px solid #E9EDF3', display: 'flex', flexDirection: 'column', padding: '16px 0', flexShrink: 0 }}>
-          <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, padding: '0 12px' }}>
-            {[
-              { label: 'Home', path: '/projects', icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg> },
-              { label: 'Projects', path: '/projects', icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg> },
-              { label: 'User Mgmt', path: '/admin', active: true, icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> },
-              { label: 'Support', path: '/support', icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg> },
-            ].map(item => (
-              <button key={item.label} onClick={() => { window.location.pathname = item.path; }}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, background: item.active ? '#EEF3FF' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'inherit' }}>
-                <span style={{ color: item.active ? '#1A4B8B' : '#6B7A90', lineHeight: 0 }}>{item.icon}</span>
-                <span style={{ fontSize: 13.5, color: item.active ? '#1A4B8B' : '#6B7A90', fontWeight: item.active ? 600 : 400 }}>{item.label}</span>
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main content */}
-        <main style={{ flex: 1, padding: '28px 32px', overflow: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: DARK, margin: 0 }}>User Management</h1>
-          <span style={{ marginLeft: 12, background: '#F0F2F5', borderRadius: 20, padding: '3px 10px', fontSize: 13, color: '#6B7A90' }}>
+        <div style={{ display: 'flex', alignItems: 'center', margin: '28px 0 20px' }}>
+          <h1 style={{ fontSize: 28, fontWeight: 600, color: DARK, margin: 0 }}>User Management</h1>
+          <span style={{ marginLeft: 12, background: '#F0F0F0', borderRadius: 20, padding: '2px 10px', fontSize: 13, color: '#666' }}>
             {users.length} users
           </span>
         </div>
@@ -302,23 +209,14 @@ function AdminPageInner({ user }) {
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <select
-              value={orgFilter}
-              onChange={e => setOrgFilter(e.target.value)}
-              style={{ border: '1.5px solid #D0D0D0', borderRadius: 6, padding: '9px 14px', fontSize: 14, background: '#fff', color: orgs.length ? '#333' : '#999', outline: 'none', minWidth: 160 }}
-            >
-              <option value="">{orgs.length ? 'All Organisations' : 'No organisations yet'}</option>
-              {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
-            <button
-              onClick={() => { setOrgForm({ name: '', org_type: 'si', email: '', phone: '' }); setErr(''); setModal('create-org'); }}
-              title="Add Organisation"
-              style={{ background: '#fff', border: '1.5px solid #D0D0D0', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#555' }}
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-          </div>
+          <select
+            value={orgFilter}
+            onChange={e => setOrgFilter(e.target.value)}
+            style={{ border: '1.5px solid #D0D0D0', borderRadius: 6, padding: '9px 14px', fontSize: 14, background: '#fff', color: '#333', outline: 'none', minWidth: 160 }}
+          >
+            <option value="">All Organisations</option>
+            {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
 
           <button onClick={loadUsers} style={iconBtnStyle} title="Apply filters">
             <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#555" strokeWidth="2">
@@ -361,14 +259,7 @@ function AdminPageInner({ user }) {
                     </div>
                   </td>
                   <td style={{ ...tdStyle, color: '#555' }}>{u.email}</td>
-                  <td style={tdStyle}>
-                    <div>{u.org_name || '—'}</div>
-                    {u.org_type && (
-                      <span style={{ fontSize: 11, fontWeight: 600, color: u.org_type === 'distributor' ? '#8B1A6B' : '#1565C0', background: u.org_type === 'distributor' ? '#FDE8F5' : '#E8F4FF', padding: '1px 6px', borderRadius: 10 }}>
-                        {u.org_type === 'distributor' ? 'Distributor' : 'SI'}
-                      </span>
-                    )}
-                  </td>
+                  <td style={{ ...tdStyle, color: '#555' }}>{u.org_name || '—'}</td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       {u.roles.length === 0
@@ -427,12 +318,12 @@ function AdminPageInner({ user }) {
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {roles.map(r => (
-              <label key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: '12px 14px', borderRadius: 8, border: `1.5px solid ${selRoles.includes(r.id) ? '#1DB5AA' : BORDER}`, background: selRoles.includes(r.id) ? '#FFFBF2' : '#fff', transition: 'all 0.15s' }}>
+              <label key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: '12px 14px', borderRadius: 8, border: `1.5px solid ${selRoles.includes(r.id) ? GOLD : BORDER}`, background: selRoles.includes(r.id) ? '#FFFBF2' : '#fff', transition: 'all 0.15s' }}>
                 <input
                   type="checkbox"
                   checked={selRoles.includes(r.id)}
                   onChange={() => setSelRoles(prev => prev.includes(r.id) ? prev.filter(x => x !== r.id) : [...prev, r.id])}
-                  style={{ marginTop: 2, accentColor: '#1DB5AA', width: 16, height: 16 }}
+                  style={{ marginTop: 2, accentColor: GOLD, width: 16, height: 16 }}
                 />
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14, color: DARK }}>{r.display_name}</div>
@@ -462,15 +353,6 @@ function AdminPageInner({ user }) {
           <ModalFooter onCancel={closeModal} onConfirm={handleDelete} confirmLabel="Delete" saving={saving} danger />
         </Modal>
       )}
-
-      {modal === 'create-org' && (
-        <Modal title="Add Organisation" onClose={closeModal} width={460}>
-          <OrgForm form={orgForm} setForm={setOrgForm} />
-          {err && <ErrorMsg msg={err} />}
-          <ModalFooter onCancel={closeModal} onConfirm={handleCreateOrg} confirmLabel="Create Organisation" saving={saving} />
-        </Modal>
-      )}
-      </div>
     </div>
   );
 }
@@ -493,15 +375,7 @@ function UserForm({ form, setForm, orgs, roles, selRoles, setSelRoles, showRoles
       <FormField label="Organisation" required>
         <select value={form.organization_id || ''} onChange={f('organization_id')} style={{ ...inputStyle, background: '#fff' }}>
           <option value="">Select organisation…</option>
-          {['distributor', 'si'].map(type => {
-            const group = orgs.filter(o => o.org_type === type);
-            if (!group.length) return null;
-            return (
-              <optgroup key={type} label={type === 'distributor' ? 'Distributors' : 'System Integrators'}>
-                {group.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </optgroup>
-            );
-          })}
+          {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
       </FormField>
       {showRoles && roles && (
@@ -521,29 +395,6 @@ function UserForm({ form, setForm, orgs, roles, selRoles, setSelRoles, showRoles
           </div>
         </FormField>
       )}
-    </div>
-  );
-}
-
-function OrgForm({ form, setForm }) {
-  const f = (k) => (e) => setForm(prev => ({ ...prev, [k]: e.target.value }));
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <FormField label="Organisation Name" required>
-        <input value={form.name || ''} onChange={f('name')} placeholder="Nexora Systems" style={inputStyle} autoFocus />
-      </FormField>
-      <FormField label="Type" required>
-        <select value={form.org_type} onChange={f('org_type')} style={{ ...inputStyle, background: '#fff' }}>
-          <option value="si">System Integrator (SI)</option>
-          <option value="distributor">Distributor</option>
-        </select>
-      </FormField>
-      <FormField label="Email">
-        <input value={form.email || ''} onChange={f('email')} placeholder="contact@company.com" type="email" style={inputStyle} />
-      </FormField>
-      <FormField label="Phone">
-        <input value={form.phone || ''} onChange={f('phone')} placeholder="+91 98765 43210" style={inputStyle} />
-      </FormField>
     </div>
   );
 }
@@ -646,17 +497,65 @@ function ErrorMsg({ msg }) {
   return <div style={{ marginTop: 12, padding: '10px 14px', background: '#FFF0F0', border: '1px solid #FFCDD2', borderRadius: 6, fontSize: 13, color: '#C62828' }}>{msg}</div>;
 }
 
+function Sidebar({ active }) {
+  return (
+    <aside style={{ width: 72, background: '#D9D9D9', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 24 }}>
+      {SIDEBAR_ITEMS.map(({ icon: Icon, label, path }) => (
+        <button
+          key={label}
+          onClick={() => { window.location.pathname = path; }}
+          title={label}
+          style={{ background: label === active ? 'rgba(0,0,0,0.12)' : 'none', border: 'none', borderRadius: 8, width: 48, height: 48, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4, color: '#444' }}
+        >
+          <Icon />
+        </button>
+      ))}
+    </aside>
+  );
+}
+
+function TopBar({ user }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <span style={{ fontSize: 22, fontWeight: 700, color: DARK, letterSpacing: 0.3 }}>We.OKAS</span>
+      <span style={{ marginLeft: 4, fontSize: 12, fontWeight: 600, background: '#1C1C1E', color: GOLD, padding: '2px 8px', borderRadius: 4 }}>ADMIN</span>
+      <div style={{ flex: 1, margin: '0 24px' }}>
+        <input placeholder="Search" style={{ width: '100%', maxWidth: 520, border: '1.5px solid #CCC', borderRadius: 8, padding: '8px 16px', fontSize: 14, background: '#fff', outline: 'none' }} />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: DARK, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="18" height="18" fill="none" viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="22" stroke={GOLD} strokeWidth="2.5" fill="none"/>
+            <path d="M16 30 L24 14 L32 30" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <line x1="18.5" y1="25" x2="29.5" y2="25" stroke={GOLD} strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#555" strokeWidth="1.8">
+          <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        {user.picture
+          ? <img src={user.picture} alt="avatar" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+          : <div style={{ width: 36, height: 36, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>{(user.name || user.email || 'U')[0].toUpperCase()}</div>
+        }
+      </div>
+    </div>
+  );
+}
+
 // ── Icon components ───────────────────────────────────────────
-function EditIcon()  { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>; }
-function RolesIcon() { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>; }
-function TrashIcon() { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>; }
+function HomeIcon()    { return <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>; }
+function BoxIcon()     { return <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>; }
+function UsersIcon()   { return <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>; }
+function SearchIcon()  { return <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>; }
+function SupportIcon() { return <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>; }
+function EditIcon()    { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>; }
+function RolesIcon()   { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>; }
+function TrashIcon()   { return <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>; }
 
 // ── Helpers ───────────────────────────────────────────────────
-const tdStyle = { padding: '14px 20px', fontSize: 14, color: '#4A5568', verticalAlign: 'middle' };
-const inputStyle = { width: '100%', border: '1.5px solid #E9EDF3', borderRadius: 8, padding: '9px 14px', fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#0D1B2A', background: '#FAFBFC', fontFamily: 'inherit' };
-const iconBtnStyle = { background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-const headerStyle = { display: 'flex', alignItems: 'center', gap: 20, background: '#fff', borderBottom: '1px solid #E9EDF3', padding: '0 24px', height: 60, position: 'sticky', top: 0, zIndex: 50 };
-const logoTextStyle = { fontSize: '1.15rem', fontWeight: 700, background: 'linear-gradient(90deg, #1DB5AA 0%, #E87B3B 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' };
+const tdStyle = { padding: '14px 20px', fontSize: 14, color: '#333', verticalAlign: 'middle' };
+const inputStyle = { width: '100%', border: '1.5px solid #D0D0D0', borderRadius: 6, padding: '9px 14px', fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#1C1C1E' };
+const iconBtnStyle = { background: '#fff', border: '1.5px solid #D0D0D0', borderRadius: 6, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' };
 
 function formatDT(dt) {
   if (!dt) return '—';

@@ -1,29 +1,54 @@
-import React from 'react';
-import LoginPage from './pages/LoginPage';
-import CallbackPage from './pages/CallbackPage';
-import WelcomePage from './pages/WelcomePage';
-import ProjectsPage from './pages/ProjectsPage';
-import AddProjectPage from './pages/AddProjectPage';
-import AdminPage from './pages/AdminPage';
+import { useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import theme from './theme/theme';
+import AppRouter from './routes/index';
+import useAuthStore from './features/auth/authStore';
+import useInactivityTimer from './features/auth/useInactivityTimer';
 
-function getPage() {
-  const path = window.location.pathname;
-  if (path === '/callback')     return 'callback';
-  if (path === '/welcome')      return 'welcome';
-  if (path === '/projects')     return 'projects';
-  if (path === '/projects/new') return 'add-project';
-  if (path === '/admin')        return 'admin';
-  return 'login';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      retry: 1,
+      refetchOnWindowFocus: true,
+    },
+  },
+});
+
+export default function App() {
+  const { logout, isAuthenticated, refreshPermissions } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshPermissions();
+      queryClient.invalidateQueries();
+    } else {
+      queryClient.clear();
+    }
+  }, [isAuthenticated]);
+
+  useInactivityTimer({
+    timeoutMs: 30 * 60 * 1000,
+    enabled: isAuthenticated,
+    onTimeout: () => {
+      logout();
+      window.location.href = '/auth/login';
+    },
+  });
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <BrowserRouter>
+          <AppRouter />
+        </BrowserRouter>
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
 }
-
-function App() {
-  const page = getPage();
-  if (page === 'callback')    return <CallbackPage />;
-  if (page === 'welcome')     return <WelcomePage />;
-  if (page === 'projects')    return <ProjectsPage />;
-  if (page === 'add-project') return <AddProjectPage />;
-  if (page === 'admin')       return <AdminPage />;
-  return <LoginPage />;
-}
-
-export default App;
