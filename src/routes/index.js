@@ -9,9 +9,10 @@ import { TopNav, LeftNav } from '../features/we-okas/shared/SharedNav';
 import AppShell from '../features/we-okas/_layout/AppShell';
 import ProjectDetail from '../features/we-okas/system-integrators/projects/ProjectDetail';
 // Auth
-const LoginPage          = lazy(() => import('../features/auth/LoginPage'));
-const OtpPage            = lazy(() => import('../features/auth/OtpPage'));
-const ForgotPasswordPage = lazy(() => import('../features/auth/ForgotPasswordPage'));
+const LoginPage            = lazy(() => import('../features/auth/LoginPage'));
+const OtpPage              = lazy(() => import('../features/auth/OtpPage'));
+const ForgotPasswordPage   = lazy(() => import('../features/auth/ForgotPasswordPage'));
+const GoogleCallbackPage   = lazy(() => import('../features/auth/GoogleCallbackPage'));
 
 // PM portal
 const PMProjects = lazy(() => import('../features/we-okas/system-integrators/projects/ProjectsPage'));
@@ -49,6 +50,7 @@ export default function AppRouter() {
       <Route path="/auth/login"           element={<S><LoginPage /></S>} />
       <Route path="/auth/otp"             element={<S><OtpPage /></S>} />
       <Route path="/auth/forgot-password" element={<S><ForgotPasswordPage /></S>} />
+      <Route path="/auth/callback"        element={<S><GoogleCallbackPage /></S>} />
 
       {/* WE.OKAS admin console */}
       <Route element={<ProtectedRoute />}>

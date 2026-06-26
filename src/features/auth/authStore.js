@@ -10,7 +10,7 @@ const useAuthStore = create(
       permissions: [],
       permissionsGrouped: {},
       isAuthenticated: false,
-      isLoading: false,
+      isLoading: true,
       error: null,
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
@@ -63,6 +63,19 @@ const useAuthStore = create(
         permissionsGrouped: s.permissionsGrouped,
         isAuthenticated: s.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        // Backfill organization_id from JWT if missing (handles existing sessions)
+        if (state.accessToken && state.user && !state.user.organization_id) {
+          try {
+            const payload = JSON.parse(atob(state.accessToken.split('.')[1]));
+            if (payload.organization_id) {
+              state.user = { ...state.user, organization_id: payload.organization_id };
+            }
+          } catch { /* ignore malformed token */ }
+        }
+        state.setLoading(false);
+      },
     }
   )
 );

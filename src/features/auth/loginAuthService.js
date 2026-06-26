@@ -1,4 +1,5 @@
 const BASE_URL = '/api';
+const BASE_URL1 = 'https://api.okas.ai';
 
 async function fetchPermissions(accessToken) {
   try {
@@ -28,25 +29,22 @@ export async function sendOtp(email) {
   }
 }
 
-export async function verifyOtp(email, otp) {
-  const res = await fetch(`${BASE_URL}/auth/otp/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, otp, keep_logged_in: false }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || data.detail || 'Invalid or expired OTP');
+// export async function verifyOtp(email, otp) {
+//   const params = new URLSearchParams({ email, otp, keep_logged_in: false });
+//   const res = await fetch(`${BASE_URL}/auth/verify-otp?${params}`);
+//   const data = await res.json().catch(() => ({}));
 
-  const accessToken    = data.access_token ?? null;
-  const permissionsData = accessToken ? await fetchPermissions(accessToken) : { flat: [], grouped: {} };
+//   if (!res.ok || !data.success) {
+//     throw new Error(data.message || data.detail || 'Invalid or expired OTP');
+//   }
 
-  return {
-    sessionToken: data.token ?? null,
-    accessToken,
-    user:         data.user ?? null,
-    permissionsData,
-  };
-}
+//   return {
+//     org_type:        data.org_type ?? null,
+//     email:           data.email ?? email,
+//     organization_id: data.organization_id ?? null,
+//     access_token:    data.access_token ?? null,
+//   };
+// }
 
 export async function loginWithPassword(email, password) {
   const res = await fetch(`${BASE_URL}/members/auth/login/password`, {
@@ -65,5 +63,27 @@ export async function loginWithPassword(email, password) {
     accessToken,
     user:         data.user ?? null,
     permissionsData,
+  };
+}
+
+
+export async function verifyOtp(email, otp, keepLoggedIn = false) {
+  const res = await fetch(`${BASE_URL}/auth/otp/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp, keep_logged_in: keepLoggedIn }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || data.detail || 'Invalid or expired OTP');
+  }
+
+  return {
+    org_type:        data.user?.org_type ?? null,
+    email:           data.user?.email ?? email,
+    organization_id: data.user?.organization_id ?? null,
+    access_token:    data.access_token ?? null,
   };
 }

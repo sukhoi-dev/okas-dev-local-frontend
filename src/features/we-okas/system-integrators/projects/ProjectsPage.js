@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import FilterDropdown from '../../project-managers/FilterDropdown';
 import AddProjectDrawer from './AddProjectDrawer';
+import ProjectDetailDrawer from './ProjectDetail';
 import { useProjects } from './useProjects';
 import projectService from './projectService';
 import { TopNav, LeftNav } from '../../shared/SharedNav';
@@ -134,6 +135,8 @@ export default function ProjectsPage() {
   const [localDeleted, setLocalDeleted] = useState([]);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [showEditDrawer, setShowEditDrawer] = useState(false);
+  const [showDetailDrawer, setShowDetailDrawer] = useState(false);
+  const [detailProject, setDetailProject] = useState(null);
   const [editData, setEditData] = useState(undefined);
   const [editId, setEditId] = useState(undefined);
   const [openKebabId, setOpenKebabId] = useState(null);
@@ -206,6 +209,31 @@ export default function ProjectsPage() {
     });
     setEditId(id);
     setShowEditDrawer(true);
+  };
+
+  const handleRowClick = (id) => {
+    const raw = rawProjects.find(p => p.id === id);
+    if (!raw) return;
+    const ownerPhone = raw.owner?.phone || raw.mobile || '';
+    const knownCodes = ['+91', '+1', '+44', '+86'];
+    const ownerPhoneCode = knownCodes.find(c => ownerPhone.startsWith(c)) || '+91';
+    const ownerPhone2 = ownerPhone.startsWith(ownerPhoneCode) ? ownerPhone.slice(ownerPhoneCode.length) : ownerPhone;
+    const rawType = raw.project_type || raw.building_type || 'residential';
+    setDetailProject({
+      id: raw.id,
+      buildingId: raw.building_id || (raw.id != null ? String(raw.id) : ''),
+      buildingType: rawType.charAt(0).toUpperCase() + rawType.slice(1),
+      address: raw.address || '—',
+      landmark: raw.landmark || raw.notes || '',
+      assignedMember: raw.assigned_member?.full_name || '—',
+      ownerName: raw.owner?.full_name || raw.owner?.name || '—',
+      ownerPhoneCode,
+      ownerPhone: ownerPhone2,
+      ownerPhoneRaw: ownerPhone,
+      ownerEmail: raw.owner?.email || raw.email || '—',
+      serialNo: raw.serial_number || raw.okas_box_info || '—',
+    });
+    setShowDetailDrawer(true);
   };
 
   const activeFilterCount = Object.values(appliedFilters).reduce((acc, arr) => acc + arr.length, 0);
@@ -348,7 +376,8 @@ export default function ProjectsPage() {
                   >
                     <motion.div
                       whileHover={{ backgroundColor: '#f8fafc' }}
-                      className="flex items-center px-[24px] h-[68px] bg-white w-full transition-colors border-b border-[#e2e2e2]"
+                      onClick={() => handleRowClick(project.id)}
+                      className="flex items-center px-[24px] h-[68px] bg-white w-full transition-colors border-b border-[#e2e2e2] cursor-pointer"
                     >
                       {/* Project Information */}
                       <div className="flex-1 min-w-0 flex flex-col gap-[2px] pr-[16px]">
@@ -374,7 +403,7 @@ export default function ProjectsPage() {
                         <StatusBadge status={project.status} />
                       </div>
                       {/* Kebab */}
-                      <div className="w-[60px] shrink-0 flex justify-end">
+                      <div className="w-[60px] shrink-0 flex justify-end" onClick={(e) => e.stopPropagation()}>
                         <KebabMenu
                           onEdit={() => handleEdit(project.id)}
                           onDelete={() => handleDelete(project.id)}
@@ -389,6 +418,14 @@ export default function ProjectsPage() {
           )}
         </div>
       </div>
+
+      {/* Detail Drawer */}
+      <ProjectDetailDrawer
+        isOpen={showDetailDrawer}
+        onClose={() => { setShowDetailDrawer(false); setDetailProject(null); }}
+        project={detailProject}
+        onEdit={() => detailProject && handleEdit(detailProject.id)}
+      />
 
       {/* Add Drawer */}
       <AddProjectDrawer
