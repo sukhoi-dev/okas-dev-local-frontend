@@ -18,13 +18,15 @@ const SIDEBAR_WIDTH  = 240;
 const COLLAPSED_W    = 64;
 
 export default function Sidebar({ open, collapsed }) {
-  const role        = useAuthStore((s) => s.user?.role);
-  const permissions = useAuthStore((s) => s.permissions); // flat backend keys e.g. "members.view"
-  const { logout }  = useAuth();
-  const navigate    = useNavigate();
+  const role           = useAuthStore((s) => s.user?.role);
+  const is_super_admin = useAuthStore((s) => s.user?.is_super_admin);
+  const permissions    = useAuthStore((s) => s.permissions); // flat backend keys e.g. "members.view"
+  const { logout }     = useAuth();
+  const navigate       = useNavigate();
 
   const visibleNav = weOkasNav.filter((item) => {
     if (!item.permission) return true;
+    if (is_super_admin) return true;
     // Check both: flat backend permissions (e.g. "members.view") AND role-based RBAC
     return permissions.includes(item.permission) || roleHasPermission(role, item.permission);
   });

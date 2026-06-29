@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { applyInterceptors } from './interceptors';
+import env from '../config/env';
 
-// Dedicated client for the local FastAPI backend (http://localhost:8000).
-// CORS is open on the backend so direct calls work without the Vite proxy.
 const weOkasClient = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: env.API_BASE_URL,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });

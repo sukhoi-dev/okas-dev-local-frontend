@@ -75,12 +75,13 @@ function RowActions({ member, onEdit, onDelete, canEdit, canDelete }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function UsersPage() {
-  const user        = useAuthStore((s) => s.user);
-  const permissions = useAuthStore((s) => s.permissions);
+  const user           = useAuthStore((s) => s.user);
+  const permissions    = useAuthStore((s) => s.permissions);
+  const is_super_admin = user?.is_super_admin;
 
-  const canCreate = permissions.includes('members.create');
-  const canEdit   = permissions.includes('members.edit');
-  const canDelete = permissions.includes('members.delete');
+  const canCreate = is_super_admin || permissions.includes('members.create');
+  const canEdit   = is_super_admin || permissions.includes('members.edit');
+  const canDelete = is_super_admin || permissions.includes('members.delete');
 
   const [statusFilter,  setStatusFilter]  = useState('active');
   const [search,        setSearch]        = useState('');
