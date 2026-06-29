@@ -11,10 +11,10 @@ function getRoleRedirectPath(user) {
   if (user?.org_type === 'distributor') return '/distributor/dashboard';
   if (user?.org_type === 'si')          return '/si/dashboard';
   switch (user?.role) {
-    case 'admin':            return ROUTE_PATHS.WEOKAS_DASHBOARD;
-    case 'Viewer':           return '/user/dashboard';
-    case 'Project Manager':
-    default:                 return '/dashboard';
+    case 'admin':  return ROUTE_PATHS.WEOKAS_DASHBOARD;
+    case 'user':   return '/user/dashboard';
+    case 'pm':
+    default:       return '/dashboard';
   }
 }
 
@@ -67,8 +67,7 @@ export default function OtpPage() {
     setError('');
     setIsLoading(true);
     try {
-      const { org_type, email: verifiedEmail, organization_id, access_token } = await verifyOtp(email, otpValue);
-      const user = { email: verifiedEmail, org_type, organization_id };
+      const { user, access_token } = await verifyOtp(email, otpValue, keepLoggedIn);
       storeLogin(user, access_token, [], {});
       navigate(getRoleRedirectPath(user));
     } catch (err) {

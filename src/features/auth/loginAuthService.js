@@ -16,7 +16,7 @@ async function fetchPermissions(accessToken) {
 }
 
 export async function sendOtp(email) {
-  const res = await fetch(`${BASE_URL}/auth/send-otp`, {
+  const res = await fetch(`${BASE_URL}/auth/otp/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
@@ -25,14 +25,14 @@ export async function sendOtp(email) {
   if (!res.ok) {
     throw new Error(data.message || data.detail || 'Failed to send OTP');
   }
-  if (data.otp) {
-    alert(`OTP: ${data.otp}`);
-  }
 }
 
-export async function verifyOtp(email, otp) {
-  const params = new URLSearchParams({ email, otp, keep_logged_in: false });
-  const res = await fetch(`${BASE_URL}/auth/verify-otp?${params}`);
+export async function verifyOtp(email, otp, keepLoggedIn = false) {
+  const res = await fetch(`${BASE_URL}/auth/otp/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp, keep_logged_in: keepLoggedIn }),
+  });
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok || !data.success) {
@@ -40,10 +40,8 @@ export async function verifyOtp(email, otp) {
   }
 
   return {
-    org_type:        data.org_type ?? null,
-    email:           data.email ?? email,
-    organization_id: data.organization_id ?? null,
-    access_token:    data.access_token ?? null,
+    user:         data.user,
+    access_token: data.access_token ?? null,
   };
 }
 

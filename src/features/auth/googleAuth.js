@@ -1,6 +1,8 @@
 const COGNITO_DOMAIN = import.meta.env.VITE_COGNITO_DOMAIN;
 const CLIENT_ID      = import.meta.env.VITE_COGNITO_CLIENT_ID;
-const REDIRECT_URI   = import.meta.env.VITE_REDIRECT_URI || window.location.origin + '/auth/callback';
+// Always derive from window.location.origin so localStorage is scoped to the same
+// origin on both app.okas.ai and the Amplify domain — eliminates cross-origin PKCE loss.
+const REDIRECT_URI   = window.location.origin + '/auth/callback';
 
 function generateRandomString(length) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';

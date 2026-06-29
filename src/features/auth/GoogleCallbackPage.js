@@ -41,7 +41,7 @@ export default function GoogleCallbackPage() {
     }
 
     handleGoogleCallback(code)
-      .then(async ({ cognitoUser, accessToken }) => {
+      .then(async ({ cognitoUser, accessToken: cognitoToken }) => {
         const res = await fetch(`${env.API_BASE_URL}/auth/verify`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -54,11 +54,17 @@ export default function GoogleCallbackPage() {
         }
 
         const json = await res.json();
-        const raw  = json.data;
-        // Super admins come from SSM without a role field — synthesize 'admin' so RBAC works
-        const user = raw.is_super_admin ? { ...raw, role: 'admin' } : raw;
-        // Permissions are fetched lazily by authStore.refreshPermissions on mount
-        storeLogin(user, accessToken, [], {});
+        // Backend issues its own JWT; fall back to Cognito token for old deployments
+        const backendToken   = json.access_token || cognitoToken;
+        const is_super_admin = !!json.data?.is_super_admin;
+        // json.user has corrected role+org_type; json.data is used for super admins
+        const rawUser = is_super_admin ? json.data : (json.user ?? json.data);
+        // Super admins have no DB role — synthesize 'admin' so RBAC/sidebar work
+        const user = is_super_admin
+          ? { ...rawUser, is_super_admin: true,  role: 'admin' }
+          : { ...rawUser, is_super_admin: false };
+        // Permissions fetched lazily by authStore.refreshPermissions on mount
+        storeLogin(user, backendToken, [], {});
         navigate(getRoleRedirectPath(user), { replace: true });
       })
       .catch((e) => setError(e.message));
