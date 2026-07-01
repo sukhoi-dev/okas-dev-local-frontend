@@ -52,7 +52,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function KebabMenu({ onEdit, onDelete, onOpenChange }) {
+function KebabMenu({ onEdit, onConfigure, onDelete, onOpenChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
@@ -108,7 +108,7 @@ function KebabMenu({ onEdit, onDelete, onOpenChange }) {
                 <>
                   <motion.button onClick={() => { toggle(false); onEdit(); }} whileHover={{ x: 4, backgroundColor: '#f4f7fb' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#0a1e3f] font-['Inter:Medium',sans-serif] font-medium transition-colors">Edit</motion.button>
                   <div className="h-px bg-[#e2e2e2]" />
-                  <motion.button whileHover={{ x: 4, backgroundColor: '#f4f7fb' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#0a1e3f] font-['Inter:Medium',sans-serif] font-medium transition-colors">Configure</motion.button>
+                  <motion.button onClick={() => { toggle(false); onConfigure(); }} whileHover={{ x: 4, backgroundColor: '#f4f7fb' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#0a1e3f] font-['Inter:Medium',sans-serif] font-medium transition-colors">Configure</motion.button>
                   <div className="h-px bg-[#e2e2e2]" />
                   <motion.button onClick={() => setConfirmDelete(true)} whileHover={{ x: 4, backgroundColor: '#fef2f2' }} className="w-full px-[16px] py-[12px] text-left text-[14px] text-[#ff4444] font-['Inter:Medium',sans-serif] font-medium transition-colors">Delete</motion.button>
                 </>
@@ -206,6 +206,14 @@ export default function ProjectsPage() {
     });
     setEditId(id);
     setShowEditDrawer(true);
+  };
+
+  const handleConfigure = (id) => {
+    const raw = rawProjects.find(p => p.id === id);
+    if (!raw) return;
+
+    const buildingId = raw.building_id || String(raw.id);
+    window.open(`/studio/${buildingId}`, '_blank');
   };
 
   const activeFilterCount = Object.values(appliedFilters).reduce((acc, arr) => acc + arr.length, 0);
@@ -377,6 +385,7 @@ export default function ProjectsPage() {
                       <div className="w-[60px] shrink-0 flex justify-end">
                         <KebabMenu
                           onEdit={() => handleEdit(project.id)}
+                          onConfigure={() => handleConfigure(project.id)}
                           onDelete={() => handleDelete(project.id)}
                           onOpenChange={(open) => setOpenKebabId(open ? project.id : null)}
                         />

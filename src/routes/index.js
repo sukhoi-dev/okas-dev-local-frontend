@@ -95,6 +95,7 @@ export default function AppRouter() {
 
       {/* Design Studio */}
       <Route path="/studio" element={<S><DesignStudioApp /></S>} />
+      <Route path="/studio/:buildingId" element={<S><DesignStudioApp /></S>} />
 
       <Route path="*" element={<Navigate to="/auth/login" replace />} />
     </Routes>

@@ -1,15 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_FLOORS } from '../_assets/mockData';
-
-let nextFloorId = 100;
+import apiClient from '../../../api/client';
 
 export function useFloorsList(buildingId) {
-  const initial = buildingId
-    ? MOCK_FLOORS.filter(f => f.building_id === buildingId)
-    : [...MOCK_FLOORS];
-  const [floors, setFloors] = useState(initial);
-  return { floors, setFloors, loading: false };
+  const [floors, setFloors] = useState([]);
+  const [loading, setLoading] = useState(!!buildingId);
+
+  const refetch = useCallback(() => {
+    if (!buildingId) { setFloors([]); setLoading(false); return; }
+    setLoading(true);
+    apiClient.get(`/we-okas/projects/${buildingId}/floors`)
+      .then((r) => setFloors(r.data?.body?.floors ?? []))
+      .catch(() => setFloors([]))
+      .finally(() => setLoading(false));
+  }, [buildingId]);
+
+  useEffect(() => { refetch(); }, [refetch]);
+
+  return { floors, setFloors, loading, refetch };
 }
 
 export async function deleteFloor() {
@@ -21,31 +29,35 @@ export default function FloorDrawer({ isOpen, onClose, buildingId, buildingType,
   const [level, setLevel] = useState(0);
   const [shortForm, setShortForm] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleClose = () => {
     setFloorName('');
     setLevel(0);
     setShortForm('');
+    setError(null);
     onClose();
   };
 
   const handleShortFormChange = (e) => setShortForm(e.target.value.slice(0, 4));
 
   const handleSave = async () => {
-    if (!floorName.trim()) return;
+    if (!floorName.trim() || !buildingId) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    const newFloor = {
-      id: nextFloorId++,
-      floor_name: floorName,
-      floor_type: buildingType ?? 'Residential',
-      floor_pos: level,
-      building_id: buildingId,
-      floor_description: shortForm,
-    };
-    onSave(newFloor);
-    setSaving(false);
-    handleClose();
+    setError(null);
+    try {
+      const res = await apiClient.post(`/we-okas/projects/${buildingId}/floors`, {
+        floor_name: floorName,
+        floor_pos: level,
+        floor_description: shortForm,
+      });
+      onSave({ ...res.data.body, floor_type: buildingType ?? 'Residential' });
+      handleClose();
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to create floor');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -113,6 +125,9 @@ export default function FloorDrawer({ isOpen, onClose, buildingId, buildingType,
 
             <div className="flex flex-col">
               <div className="bg-[#e2e2e2] h-px w-full" />
+              {error && (
+                <p className="px-[28px] pt-[12px] font-['Inter:Regular',sans-serif] text-[#ff4444] text-[13px]">{error}</p>
+              )}
               <div className="bg-white flex items-center justify-end gap-[8px] px-[28px] py-[16px]">
                 <button onClick={handleClose} disabled={saving} className="flex h-[48px] items-center justify-center px-[24px] rounded-[4px] cursor-pointer hover:bg-[#f4f7fb] transition-colors disabled:opacity-50">
                   <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[15px]">Cancel</p>
@@ -129,19 +144,31 @@ export default function FloorDrawer({ isOpen, onClose, buildingId, buildingType,
   );
 }
 
-export function EditFloorDrawer({ floor, onClose, onSave }) {
-  const [floorName, setFloorName] = useState(floor.floor_name);
-  const [level, setLevel] = useState(floor.floor_pos);
-  const [shortForm, setShortForm] = useState(floor.floor_description);
+export function EditFloorDrawer({ buildingId, floor, onClose, onSave }) {
+  const [floorName, setFloorName] = useState(floor.floor_name ?? '');
+  const [level, setLevel] = useState(floor.floor_pos ?? 0);
+  const [shortForm, setShortForm] = useState(floor.floor_description ?? '');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleShortFormChange = (e) => setShortForm(e.target.value.slice(0, 4));
 
   const handleSave = async () => {
+    if (!floorName.trim() || !buildingId) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    onSave({ ...floor, floor_name: floorName, floor_pos: level, floor_description: shortForm });
-    setSaving(false);
+    setError(null);
+    try {
+      const res = await apiClient.patch(`/we-okas/projects/${buildingId}/floors/${floor.id}`, {
+        floor_name: floorName,
+        floor_pos: level,
+        floor_description: shortForm,
+      });
+      onSave(res.data.body);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to update floor');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -194,6 +221,9 @@ export function EditFloorDrawer({ floor, onClose, onSave }) {
         </div>
         <div className="flex flex-col">
           <div className="bg-[#e2e2e2] h-px w-full" />
+          {error && (
+            <p className="px-[28px] pt-[12px] font-['Inter:Regular',sans-serif] text-[#ff4444] text-[13px]">{error}</p>
+          )}
           <div className="bg-white flex items-center justify-end gap-[8px] px-[28px] py-[16px]">
             <button onClick={onClose} disabled={saving} className="flex h-[48px] items-center justify-center px-[24px] rounded-[4px] cursor-pointer hover:bg-[#f4f7fb] transition-colors disabled:opacity-50">
               <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[15px]">Cancel</p>

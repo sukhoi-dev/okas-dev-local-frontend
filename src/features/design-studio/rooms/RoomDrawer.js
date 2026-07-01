@@ -1,23 +1,31 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import imgOuterRingDashed from '../_assets/dashedRing.png';
-import { MOCK_ROOMS } from '../_assets/mockData';
+import apiClient from '../../../api/client';
 
-let nextRoomId = 200;
+export function useRoomsList(buildingId, floorId) {
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(!!(buildingId && floorId));
 
-export function useRoomsList(floorId) {
-  const initial = floorId !== undefined
-    ? MOCK_ROOMS.filter(r => String(r.floor_id) === String(floorId))
-    : [...MOCK_ROOMS];
-  const [rooms, setRooms] = useState(initial);
-  return { rooms, setRooms, loading: false };
+  const refetch = useCallback(() => {
+    if (!buildingId || !floorId) { setRooms([]); setLoading(false); return; }
+    setLoading(true);
+    apiClient.get(`/we-okas/projects/${buildingId}/floors/${floorId}/rooms`)
+      .then((r) => setRooms(r.data?.body?.rooms ?? []))
+      .catch(() => setRooms([]))
+      .finally(() => setLoading(false));
+  }, [buildingId, floorId]);
+
+  useEffect(() => { refetch(); }, [refetch]);
+
+  return { rooms, setRooms, loading, refetch };
 }
 
 export async function deleteRoom() {
   return Promise.resolve();
 }
 
-export default function RoomDrawer({ isOpen, onClose, floorId, onSave }) {
+export default function RoomDrawer({ isOpen, onClose, buildingId, floorId, onSave }) {
   const [roomName, setRoomName] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -43,20 +51,20 @@ export default function RoomDrawer({ isOpen, onClose, floorId, onSave }) {
 
   const handleSave = async () => {
     if (!roomName.trim()) { setError('Room name is required.'); return; }
+    if (!buildingId || !floorId) { setError('Missing floor context.'); return; }
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    const newRoom = {
-      id: nextRoomId++,
-      room_name: roomName.trim(),
-      room_type: 'room',
-      floor_id: Number(floorId),
-      room_image: photoPreview ?? null,
-      subroom_id: null,
-      zoneactive: 'true',
-    };
-    onSave(newRoom);
-    setSaving(false);
-    handleClose();
+    setError(null);
+    try {
+      const res = await apiClient.post(`/we-okas/projects/${buildingId}/floors/${floorId}/rooms`, {
+        room_name: roomName.trim(),
+      });
+      onSave(res.data.body);
+      handleClose();
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to create room');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

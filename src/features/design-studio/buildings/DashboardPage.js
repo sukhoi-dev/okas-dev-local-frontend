@@ -1,13 +1,112 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MOCK_PROJECTS, MOCK_MEMBERS } from '../_assets/mockData';
+import projectService from '../../we-okas/system-integrators/projects/projectService';
 
 let nextProjectId = 50;
 
-export default function DashboardPage({ onProjectSelected }) {
+function titleCase(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : 'Residential';
+}
+
+function ProjectDetailCard({ buildingId, onProceed }) {
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    projectService.getProject(buildingId)
+      .then((res) => setProject(res?.body ?? null))
+      .catch(() => setError('Failed to load project details'))
+      .finally(() => setLoading(false));
+  }, [buildingId]);
+
+  return (
+    <div className="bg-white rounded-[4px] shadow-[0px_16px_48px_0px_rgba(10,30,63,0.12)] relative w-full">
+      <div className="flex flex-col gap-[8px] items-start pb-[28px] pt-[32px] px-[40px]">
+        <div className="flex gap-[12px] items-center">
+          <div className="bg-[#5c7089] h-px w-[24px]" />
+          <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">PROJECT — DETAILS</p>
+        </div>
+        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[#0a1e3f] text-[28px] tracking-[-0.56px]">
+          {loading ? 'Loading project…' : (project?.name || `Building #${buildingId}`)}
+        </p>
+      </div>
+
+      <div className="bg-[#e2e2e2] h-px" />
+
+      <div className="px-[40px] py-[24px]">
+        {loading && <p className="font-['Inter:Regular',sans-serif] text-[#5c7089] text-[15px]">Loading…</p>}
+
+        {!loading && error && (
+          <p className="font-['Inter:Regular',sans-serif] text-[#ff4444] text-[15px]">{error}</p>
+        )}
+
+        {!loading && !error && project && (
+          <div className="grid grid-cols-2 gap-[20px]">
+            <div className="flex flex-col gap-[4px]">
+              <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">SERIAL NUMBER</p>
+              <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[15px]">{project.serial_number || '—'}</p>
+            </div>
+            <div className="flex flex-col gap-[4px]">
+              <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">STATUS</p>
+              <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[15px]">{project.status || '—'}</p>
+            </div>
+            <div className="flex flex-col gap-[4px]">
+              <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">ADDRESS</p>
+              <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[15px]">
+                {[project.address, project.city, project.state].filter(Boolean).join(', ') || '—'}
+              </p>
+            </div>
+            <div className="flex flex-col gap-[4px]">
+              <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">ASSIGNED MEMBER</p>
+              <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[15px]">{project.assigned_member?.full_name || '—'}</p>
+            </div>
+            <div className="flex flex-col gap-[4px]">
+              <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">BUILDING TYPE</p>
+              <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[15px]">{titleCase(project.project_type)}</p>
+            </div>
+            <div className="flex flex-col gap-[4px]">
+              <p className="font-['Inter:Medium',sans-serif] font-medium text-[#5c7089] text-[11px] tracking-[2.2px]">OWNER</p>
+              <p className="font-['Inter:Regular',sans-serif] text-[#0a1e3f] text-[15px]">{project.owner?.full_name || '—'}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-[#e2e2e2] h-px" />
+
+      <div className="px-[40px] py-[24px] flex justify-end">
+        <button
+          disabled={loading || !!error}
+          onClick={() => onProceed(String(buildingId), titleCase(project?.project_type))}
+          className="bg-[#0a1e3f] flex gap-[10px] h-[44px] items-center justify-center px-[20px] rounded-[4px] hover:bg-[#0d2851] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-white text-[14px]">Start Configuring</p>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardPage({ buildingId, onProjectSelected }) {
   const handleProjectSelect = (project) => {
     onProjectSelected(project.building_id, project.building_type);
   };
+
+  if (buildingId) {
+    return (
+      <div className="relative size-full overflow-hidden bg-[#f4f7fb]">
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 p-8">
+          <div className="w-full max-w-[720px]">
+            <ProjectDetailCard buildingId={buildingId} onProceed={onProjectSelected} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative size-full overflow-hidden bg-[#f4f7fb]">

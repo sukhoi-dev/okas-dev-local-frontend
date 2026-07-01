@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { imgRectangle1, svgPaths } from '../_assets/studioAssets';
-import FloorDrawer, { useFloorsList } from '../floors/FloorDrawer';
+import FloorDrawer, { useFloorsList, EditFloorDrawer } from '../floors/FloorDrawer';
 import RoomDrawer from './RoomDrawer';
-import { MOCK_ROOMS, MOCK_LIGHTS } from '../_assets/mockData';
+import { MOCK_LIGHTS } from '../_assets/mockData';
+import apiClient from '../../../api/client';
+import imgAvatar from '../../../assets/avatar.png';
 
 let nextLightId = 300;
 
@@ -67,13 +69,26 @@ function TopNav({ onLogout, onExportConfig, exporting }) {
       </button>
 
       <div className="flex gap-[16px] items-center">
-        <button className="flex items-center justify-center size-[40px] cursor-pointer">
+        <button className="flex items-center justify-center size-[40px] rounded-[4px] hover:bg-[#f4f7fb] transition-colors cursor-pointer">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M8.5 3.5L9 2H11L11.5 3.5L13.2 4.2L14.7 3.3L16.2 4.8L15.3 6.3L16 8V10L15.3 11.7L16.2 13.2L14.7 14.7L13.2 13.8L11.5 14.5L11 16H9L8.5 14.5L6.8 13.8L5.3 14.7L3.8 13.2L4.7 11.7L4 10V8L4.7 6.3L3.8 4.8L5.3 3.3L6.8 4.2L8.5 3.5Z" stroke="#0A1E3F" strokeLinejoin="round" strokeWidth="1.3" />
+            <circle cx="10" cy="9" r="2.5" stroke="#0A1E3F" strokeWidth="1.3" />
+          </svg>
+        </button>
+
+        <button className="relative flex items-center justify-center size-[40px] rounded-[4px] hover:bg-[#f4f7fb] transition-colors cursor-pointer">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M7.21929 16.25C7.51549 16.8047 8.00293 17.25 8.59571 17.5275C9.18849 17.805 9.85376 17.9 10.5 17.7975C11.1462 17.695 11.7371 17.4 12.1875 16.9533C12.638 16.5067 12.925 15.9302 13 15.3125" stroke="#0A1E3F" strokeLinejoin="round" strokeWidth="1.4" />
             <path d="M10.5 2.5C9.17392 2.5 7.90215 3.02678 6.96447 3.96447C6.02678 4.90215 5.5 6.17392 5.5 7.5V10L3.5 13H17.5L15.5 10V7.5C15.5 6.17392 14.9732 4.90215 14.0355 3.96447C13.0979 3.02678 11.8261 2.5 10.5 2.5Z" stroke="#0A1E3F" strokeLinecap="round" strokeWidth="1.4" />
           </svg>
+          <span className="absolute top-[2px] right-[-2px] bg-[#2f6fed] text-white text-[10px] font-semibold rounded-full px-[5px] leading-[15px] min-w-[16px] text-center">
+            100+
+          </span>
         </button>
-        <button onClick={onLogout} title="Logout" className="size-[40px] rounded-full bg-[#F4F7FB] hover:bg-[#e2e2e2] transition-colors cursor-pointer" />
+
+        <button onClick={onLogout} title="Logout" className="shrink-0 size-[40px] rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer border-0">
+          <img alt="User avatar" className="block size-full object-cover" src={imgAvatar} />
+        </button>
       </div>
     </div>
   );
@@ -82,15 +97,13 @@ function TopNav({ onLogout, onExportConfig, exporting }) {
 function NavItem({ icon, label, active, onMouseEnter }) {
   return (
     <button
-      className={`${active ? 'bg-[#f4f7fb]' : ''} h-[40px] rounded-[4px] w-full cursor-pointer hover:bg-[#f4f7fb] transition-colors`}
+      className={`${active ? 'bg-[#f4f7fb]' : ''} flex flex-col items-center justify-center gap-[6px] w-full py-[16px] rounded-[4px] cursor-pointer hover:bg-[#f4f7fb] transition-colors`}
       onMouseEnter={onMouseEnter}
     >
-      <div className="flex gap-[12px] items-center px-[12px] py-[8px]">
-        {icon}
-        <p className={`font-['Inter:${active ? 'Medium' : 'Regular'}',sans-serif] ${active ? 'font-medium text-[#0a1e3f]' : 'font-normal text-[#5c7089]'} text-[14px]`}>
-          {label}
-        </p>
-      </div>
+      {icon}
+      <p className={`font-['Inter:${active ? 'Medium' : 'Regular'}',sans-serif] ${active ? 'font-medium text-[#0a1e3f]' : 'font-normal text-[#5c7089]'} text-[13px]`}>
+        {label}
+      </p>
     </button>
   );
 }
@@ -120,8 +133,16 @@ const navFlyout = {
   'Help': { items: ['Getting Started', 'Configuration', 'Troubleshooting', 'Contact'], subItems: { 'Getting Started': ['Installation', 'First Setup', 'Quick Tour'], 'Configuration': ['Network Setup', 'Device Config', 'User Roles'], 'Troubleshooting': ['FAQ', 'Error Codes', 'Support'], 'Contact': ['Email', 'Phone', 'Chat'] } },
 };
 
-function Sidebar({ floors, roomsByFloor, selectedRoomName, onRoomSelect, onAddRoom, onAddFloor }) {
+const ROOM_CARD_GRADIENTS = [
+  'from-[#c9d6e3] to-[#e8edf3]',
+  'from-[#d9e4d0] to-[#eef3ea]',
+  'from-[#e3d9d0] to-[#f3eee8]',
+  'from-[#d0dde3] to-[#eaf1f3]',
+];
+
+function Sidebar({ buildingId, floors, roomsByFloor, selectedRoomName, onRoomSelect, onAddRoom, onAddFloor, onFloorUpdated }) {
   const [hoveredNav, setHoveredNav] = useState(null);
+  const [editingFloor, setEditingFloor] = useState(null);
   const [hoveredL1, setHoveredL1] = useState(null);
   const [activeL1, setActiveL1] = useState(null);
   const hideTimer = useRef(null);
@@ -162,32 +183,21 @@ function Sidebar({ floors, roomsByFloor, selectedRoomName, onRoomSelect, onAddRo
   return (
     <div className="relative h-full shrink-0">
       <div
-        className="bg-white flex flex-col gap-[2px] h-full px-[16px] py-[24px] w-[240px] relative z-30"
+        className="bg-white flex flex-col gap-[2px] h-full px-[8px] py-[24px] w-[100px] relative z-30"
         onMouseLeave={startHide}
         onMouseEnter={cancelHide}
       >
         <div className="flex flex-col gap-[2px] w-full">
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 8.5L10 2.5L17 8.5V17C17 17.2652 16.8946 17.5196 16.7071 17.7071C16.5196 17.8946 16.2652 18 16 18H4C3.73478 18 3.48043 17.8946 3.29289 17.7071C3.10536 17.5196 3 17.2652 3 17V8.5Z" stroke="#5C7089" strokeLinejoin="round" strokeWidth="1.4" /><path d="M8 17V11H12V17" stroke="#5C7089" strokeLinejoin="round" strokeWidth="1.4" /></svg>} label="Home" onMouseEnter={() => handleNavHover('Home')} />
           <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" stroke="#0A1E3F" strokeWidth="1.4" /><rect x="11" y="3" width="6" height="6" stroke="#0A1E3F" strokeWidth="1.4" /><rect x="3" y="11" width="6" height="6" stroke="#0A1E3F" strokeWidth="1.4" /><rect x="11" y="11" width="6" height="6" stroke="#0A1E3F" strokeWidth="1.4" /></svg>} label="Area" active onMouseEnter={() => handleNavHover('Area')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6" r="3.5" stroke="#5C7089" strokeWidth="1.4" /><circle cx="6" cy="14" r="3.5" stroke="#5C7089" strokeWidth="1.4" /><circle cx="14" cy="14" r="3.5" stroke="#5C7089" strokeWidth="1.4" /></svg>} label="Macros" onMouseEnter={() => handleNavHover('Macros')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2.5C10 2.5 8 5.5 8 9.5C8 11.0913 8.63214 12.6174 9.75736 13.7426C10.8826 14.8679 12.4087 15.5 14 15.5C15.5913 15.5 17.1174 14.8679 18.2426 13.7426C19.3679 12.6174 20 11.0913 20 9.5C20 5.5 18 2.5 18 2.5" stroke="#5C7089" strokeLinejoin="round" strokeWidth="1.4" /><path d="M8 17.5H12" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.4" /></svg>} label="Lights" onMouseEnter={() => handleNavHover('Lights')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="7" width="14" height="10" rx="1" stroke="#5C7089" strokeWidth="1.4" /><path d="M3 7H17M3 11H17M3 15H17" stroke="#5C7089" strokeWidth="1.2" /></svg>} label="Covers" onMouseEnter={() => handleNavHover('Covers')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="5.5" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.4" /><path d="M10 2.5V3.5M10 12.5V13.5M15.5 8H14.5M5.5 8H4.5" stroke="#5C7089" strokeWidth="1.4" /><path d="M13 6H15M13 9H15" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.2" /></svg>} label="Thermostat" onMouseEnter={() => handleNavHover('Thermostat')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="11" rx="1" stroke="#5C7089" strokeWidth="1.4" /><path d="M6 14L10 10L14 14" stroke="#5C7089" strokeLinejoin="round" strokeWidth="1.4" /><path d="M7 16.5H13" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.4" /></svg>} label="Media" onMouseEnter={() => handleNavHover('Media')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2.5L3 6.5V11.5C3 14.5 6 17 10 17.5C14 17 17 14.5 17 11.5V6.5L10 2.5Z" stroke="#5C7089" strokeLinejoin="round" strokeWidth="1.4" /><path d="M7.5 10L9 11.5L12.5 8" stroke="#5C7089" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.4" /></svg>} label="Security" onMouseEnter={() => handleNavHover('Security')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M17.5 13.5V15.5C17.5 16.0304 17.2893 16.5391 16.9142 16.9142C16.5391 17.2893 16.0304 17.5 15.5 17.5H4.5C3.96957 17.5 3.46086 17.2893 3.08579 16.9142C2.71071 16.5391 2.5 16.0304 2.5 15.5V4.5C2.5 3.96957 2.71071 3.46086 3.08579 3.08579C3.46086 2.71071 3.96957 2.5 4.5 2.5H6.5" stroke="#5C7089" strokeLinejoin="round" strokeWidth="1.4" /><circle cx="13" cy="6.5" r="4" fill="#5C7089" /></svg>} label="Communication" onMouseEnter={() => handleNavHover('Communication')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="#5C7089" strokeWidth="1.4" /><circle cx="7" cy="7" r="1.5" stroke="#5C7089" strokeWidth="1.2" /><circle cx="13" cy="7" r="1.5" stroke="#5C7089" strokeWidth="1.2" /><path d="M9.5 8.5V11.5M8 10H11" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.2" /></svg>} label="Controller" onMouseEnter={() => handleNavHover('Controller')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" stroke="#5C7089" strokeWidth="1.4" /><path d="M3 7H17" stroke="#5C7089" strokeWidth="1.4" /><path d="M7 7V17" stroke="#5C7089" strokeWidth="1.4" /></svg>} label="User Interface" onMouseEnter={() => handleNavHover('User Interface')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="1" stroke="#5C7089" strokeWidth="1.4" /><path d="M2.5 7.5H17.5" stroke="#5C7089" strokeWidth="1.4" /><circle cx="6" cy="5.5" r="0.75" fill="#5C7089" /><circle cx="8.5" cy="5.5" r="0.75" fill="#5C7089" /></svg>} label="Others" onMouseEnter={() => handleNavHover('Others')} />
-          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="#5C7089" strokeLinejoin="round" strokeWidth="1.4" /><path d="M10 7V13M7 10H13" stroke="#5C7089" strokeLinejoin="round" strokeWidth="1.4" /></svg>} label="Box Settings" onMouseEnter={() => handleNavHover('Box Settings')} />
+          <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" stroke="#5C7089" strokeWidth="1.4" /><rect x="11" y="3" width="6" height="6" stroke="#5C7089" strokeWidth="1.4" /><rect x="3" y="11" width="6" height="6" stroke="#5C7089" strokeWidth="1.4" /><rect x="11" y="11" width="6" height="6" stroke="#5C7089" strokeWidth="1.4" /></svg>} label="Macro" onMouseEnter={() => handleNavHover('Macros')} />
         </div>
         <div className="flex-1 min-h-px w-px" />
-        <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="#5C7089" strokeWidth="1.4" /><path d="M10 6.5V10.5" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.4" /><circle cx="10" cy="13" r="0.75" fill="#5C7089" /></svg>} label="Help" onMouseEnter={() => handleNavHover('Help')} />
+        <NavItem icon={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="#5C7089" strokeWidth="1.4" /><path d="M7.5 7.9C7.5 6.6 8.6 5.5 10 5.5C11.4 5.5 12.5 6.6 12.5 7.9C12.5 9.2 10 9.9 10 11.6" stroke="#5C7089" strokeLinecap="round" strokeWidth="1.4" /><circle cx="10" cy="14" r="0.85" fill="#5C7089" /></svg>} label="Help" />
       </div>
 
       {hoveredNav && l1Data && (
         <div
-          className="absolute left-[240px] top-0 h-full w-[160px] bg-white border-l border-[#e2e2e2] shadow-[4px_0px_16px_rgba(10,30,63,0.08)] z-20 flex flex-col"
+          className="absolute left-[100px] top-0 h-full w-[160px] bg-white border-l border-[#e2e2e2] shadow-[4px_0px_16px_rgba(10,30,63,0.08)] z-20 flex flex-col"
           onMouseEnter={cancelHide}
           onMouseLeave={startHide}
         >
@@ -218,9 +228,79 @@ function Sidebar({ floors, roomsByFloor, selectedRoomName, onRoomSelect, onAddRo
         </div>
       )}
 
-      {hoveredL1 && (l2Items.length > 0 || hoveredNav === 'Area') && (
+      {hoveredL1 && hoveredNav === 'Area' && (
         <div
-          className="absolute left-[400px] top-0 h-full w-[160px] bg-white border-l border-[#e2e2e2] shadow-[4px_0px_16px_rgba(10,30,63,0.08)] z-20 flex flex-col"
+          className="absolute left-[260px] top-0 h-full w-[640px] bg-white border-l border-[#e2e2e2] shadow-[4px_0px_16px_rgba(10,30,63,0.08)] z-20 flex flex-col"
+          onMouseEnter={cancelHide}
+          onMouseLeave={startHide}
+        >
+          <div className="flex items-center justify-between px-[32px] py-[24px] border-b border-[#e2e2e2] shrink-0">
+            <div className="flex items-center gap-[10px]">
+              <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[#0a1e3f] text-[22px] tracking-[-0.44px]">{hoveredL1}</p>
+              {(() => {
+                const floor = floors.find(f => f.floor_name === hoveredL1);
+                return floor?.floor_description ? (
+                  <p className="font-['Inter:Regular',sans-serif] text-[#5c7089] text-[15px]">({floor.floor_description})</p>
+                ) : null;
+              })()}
+              <button
+                onClick={() => {
+                  const floor = floors.find(f => f.floor_name === hoveredL1);
+                  if (floor) { setEditingFloor(floor); cancelHide(); }
+                }}
+                className="flex items-center justify-center size-[28px] rounded-[4px] hover:bg-[#f4f7fb] transition-colors cursor-pointer"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.333 2a1.886 1.886 0 0 1 2.667 2.667L5.167 13.5 2 14l.5-3.167L11.333 2Z" stroke="#5C7089" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-[32px] py-[24px]">
+            {l2Items.length === 0 ? (
+              <p className="font-['Inter:Regular',sans-serif] text-[#5c7089] text-[14px]">No rooms yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-[20px]">
+                {l2Items.map((item, i) => {
+                  const entry = (roomsByFloor[hoveredL1] ?? []).find(r => r.name === item);
+                  const isActiveRoom = item === selectedRoomName;
+                  return (
+                    <button
+                      key={entry?.id ?? i}
+                      onClick={() => { onRoomSelect(item, entry?.id ?? 0); startHide(); }}
+                      className={`relative h-[160px] rounded-[8px] overflow-hidden text-left cursor-pointer ${isActiveRoom ? 'ring-2 ring-[#0a1e3f]' : ''}`}
+                    >
+                      {entry?.image ? (
+                        <img src={entry.image} alt="" className="absolute inset-0 size-full object-cover" />
+                      ) : (
+                        <div className={`absolute inset-0 bg-gradient-to-br ${ROOM_CARD_GRADIENTS[i % ROOM_CARD_GRADIENTS.length]}`} />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
+                      <p className="absolute bottom-[12px] left-[14px] font-['Inter:Semi_Bold',sans-serif] font-semibold text-white text-[15px]">{item}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-[#e2e2e2] px-[32px] py-[16px] flex justify-end shrink-0">
+            <button
+              onClick={() => {
+                const floor = floors.find(f => f.floor_name === hoveredL1);
+                if (floor?.id != null) { onAddRoom(floor.id); startHide(); }
+              }}
+              className="bg-white border border-[#e2e2e2] flex gap-[8px] h-[40px] items-center px-[16px] rounded-[4px] cursor-pointer hover:bg-[#f4f7fb] transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="#0A1E3F" strokeLinecap="round" strokeWidth="1.4" /></svg>
+              <p className="font-['Inter:Medium',sans-serif] font-medium text-[#0a1e3f] text-[14px]">Add Zone</p>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {hoveredL1 && hoveredNav !== 'Area' && l2Items.length > 0 && (
+        <div
+          className="absolute left-[260px] top-0 h-full w-[160px] bg-white border-l border-[#e2e2e2] shadow-[4px_0px_16px_rgba(10,30,63,0.08)] z-20 flex flex-col"
           onMouseEnter={cancelHide}
           onMouseLeave={startHide}
         >
@@ -234,45 +314,25 @@ function Sidebar({ floors, roomsByFloor, selectedRoomName, onRoomSelect, onAddRo
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {l2Items.length === 0 && hoveredNav === 'Area' && (
-              <p className="px-[16px] pt-[12px] font-['Inter:Regular',sans-serif] text-[#5c7089] text-[12px]">No rooms yet.</p>
-            )}
-            {l2Items.map((item, i) => {
-              const isActiveRoom = hoveredNav === 'Area' && item === selectedRoomName;
-              return (
-                <button
-                  key={i}
-                  onClick={() => {
-                    if (hoveredNav === 'Area') {
-                      const entry = (roomsByFloor[hoveredL1] ?? []).find(r => r.name === item);
-                      onRoomSelect(item, entry?.id ?? 0);
-                      startHide();
-                    }
-                  }}
-                  className={`w-full h-[44px] flex items-center justify-end px-[16px] hover:bg-[#f4f7fb] transition-colors border-b border-[#f0f2f5] last:border-0 cursor-pointer ${isActiveRoom ? 'bg-[#f4f7fb]' : ''}`}
-                >
-                  <p className={`font-['Inter:${isActiveRoom ? 'Medium' : 'Regular'}',sans-serif] ${isActiveRoom ? 'text-[#0a1e3f]' : 'text-[#5c7089]'} text-[13px]`}>{item}</p>
-                </button>
-              );
-            })}
-          </div>
-          {hoveredNav === 'Area' && (
-            <div className="border-t border-[#e2e2e2] px-[16px] py-[14px]">
+            {l2Items.map((item, i) => (
               <button
-                onClick={() => {
-                  const floor = floors.find(f => f.floor_name === hoveredL1);
-                  if (floor?.id != null) { onAddRoom(floor.id); startHide(); }
-                }}
-                className="flex gap-[8px] items-center cursor-pointer hover:opacity-70 transition-opacity"
+                key={i}
+                className="w-full h-[44px] flex items-center justify-end px-[16px] hover:bg-[#f4f7fb] transition-colors border-b border-[#f0f2f5] last:border-0 cursor-pointer"
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 3V13M3 8H13" stroke="#0A1E3F" strokeLinecap="round" strokeWidth="1.4" />
-                </svg>
-                <p className="font-['Inter:Medium',sans-serif] font-medium text-[#0a1e3f] text-[13px]">Add Room</p>
+                <p className="font-['Inter:Regular',sans-serif] text-[#5c7089] text-[13px]">{item}</p>
               </button>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
+      )}
+
+      {editingFloor && (
+        <EditFloorDrawer
+          buildingId={buildingId}
+          floor={editingFloor}
+          onClose={() => setEditingFloor(null)}
+          onSave={(updated) => { onFloorUpdated?.(updated); setEditingFloor(null); }}
+        />
       )}
     </div>
   );
@@ -372,14 +432,15 @@ export default function RoomView({ buildingId, floorId, roomId, initialRoomName,
   const { floors, setFloors } = useFloorsList(buildingId);
 
   useEffect(() => {
-    if (!floors.length) return;
-    const map = {};
-    floors.forEach(floor => {
-      const list = MOCK_ROOMS.filter(r => String(r.floor_id) === String(floor.id));
-      map[floor.floor_name] = list.map(r => ({ id: r.id, name: r.room_name }));
-    });
-    setRoomsByFloor(map);
-  }, [floors]);
+    if (!floors.length || !buildingId) return;
+    Promise.all(
+      floors.map(floor =>
+        apiClient.get(`/we-okas/projects/${buildingId}/floors/${floor.id}/rooms`)
+          .then(r => [floor.floor_name, (r.data?.body?.rooms ?? []).map(rm => ({ id: rm.id, name: rm.room_name, image: rm.room_image }))])
+          .catch(() => [floor.floor_name, []])
+      )
+    ).then(entries => setRoomsByFloor(Object.fromEntries(entries)));
+  }, [floors, buildingId]);
 
   const [showFloorDrawer, setShowFloorDrawer] = useState(false);
   const [showRoomDrawer, setShowRoomDrawer] = useState(false);
@@ -448,7 +509,7 @@ export default function RoomView({ buildingId, floorId, roomId, initialRoomName,
     if (floor) {
       setRoomsByFloor(prev => ({
         ...prev,
-        [floor.floor_name]: [...(prev[floor.floor_name] ?? []), { id: room.id ?? 0, name: room.room_name }],
+        [floor.floor_name]: [...(prev[floor.floor_name] ?? []), { id: room.id ?? 0, name: room.room_name, image: room.room_image }],
       }));
     }
     setSelectedRoomName(room.room_name);
@@ -547,12 +608,14 @@ export default function RoomView({ buildingId, floorId, roomId, initialRoomName,
 
       <div className="flex flex-1 overflow-visible relative">
         <Sidebar
+          buildingId={buildingId}
           floors={floors}
           roomsByFloor={roomsByFloor}
           selectedRoomName={selectedRoomName}
           onRoomSelect={(name, id) => { setSelectedRoomName(name); setSelectedRoomId(id); }}
           onAddRoom={handleAddRoom}
           onAddFloor={() => setShowFloorDrawer(true)}
+          onFloorUpdated={(updated) => setFloors(prev => prev.map(f => f.id === updated.id ? updated : f))}
         />
 
         <div className="bg-[#f4f7fb] flex-1 flex flex-col gap-[10px] pb-[24px] pt-[14px] px-[40px] relative overflow-y-auto">
@@ -866,6 +929,7 @@ export default function RoomView({ buildingId, floorId, roomId, initialRoomName,
       <RoomDrawer
         isOpen={showRoomDrawer}
         onClose={() => setShowRoomDrawer(false)}
+        buildingId={buildingId}
         floorId={roomDrawerFloorId}
         onSave={handleRoomSaved}
       />

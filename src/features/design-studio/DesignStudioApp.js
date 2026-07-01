@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import DashboardPage from './buildings/DashboardPage';
 import AreaEmptyState from './rooms/AreaEmptyState';
 import RoomView from './rooms/RoomView';
@@ -10,8 +11,9 @@ const ls = {
 };
 
 export default function DesignStudioApp() {
-  const [screen, setScreen] = useState(() => ls.get('ds_screen') || 'dashboard');
-  const [buildingId, setBuildingId] = useState(() => ls.get('ds_buildingId'));
+  const { buildingId: buildingIdParam } = useParams();
+  const [screen, setScreen] = useState(() => (buildingIdParam ? 'dashboard' : ls.get('ds_screen') || 'dashboard'));
+  const [buildingId, setBuildingId] = useState(() => buildingIdParam || ls.get('ds_buildingId'));
   const [buildingType, setBuildingType] = useState(() => ls.get('ds_buildingType'));
   const [floorId, setFloorId] = useState(() => ls.get('ds_floorId') || 0);
   const [roomId, setRoomId] = useState(() => ls.get('ds_roomId') || 0);
@@ -71,7 +73,7 @@ export default function DesignStudioApp() {
 
   return (
     <div className="h-screen w-full overflow-hidden">
-      <DashboardPage onProjectSelected={handleProjectSelected} />
+      <DashboardPage buildingId={buildingIdParam} onProjectSelected={handleProjectSelected} />
     </div>
   );
 }
